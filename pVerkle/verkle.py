@@ -1,14 +1,23 @@
-
+import dumb25519
+import polycommit
 import utils
+from dumb25519 import Scalar
+from polynomial import lagrange
+
 
 class Node:
     def __init__(self):
         self.parent = None
         self.parentKey = -1
+        self.commitment = 0
+        self.poly = 0
+        self.scalar = 0
+
 class LeafNode(Node):
-    def __init__(self,keys,values):
+    def __init__(self,keys,values,fullkeys):
         self.keys = keys
         self.values = values
+        self.fullkeys = fullkeys
     def update(self,values):
         self.values = values
 
@@ -34,15 +43,19 @@ class BranchNode(InternalNode):
 class VerklePatriciaTree:
     def __init__(self):
         self.root = None
+        self.vecnum = 255
+        self.G = dumb25519.PointVector([dumb25519.random_point() for i in range(self.vecnum)])
 
-    def insert(self,keys,values,node=None):
+    def insert(self,keys,values,node=None,fullkeys = None):
         '''
         插入操作  插入的信息包括keys和values两个部分，插入后存储在树的叶子节点中
         @param keys  byte list
         @param values byte list
         '''
+        if fullkeys is None:
+            fullkeys = keys
         if self.root is None:
-            self.root = LeafNode(keys,values)
+            self.root = LeafNode(keys,values,fullkeys)
             return
         if node is LeafNode:
             prefix = utils.maxPrefix(node.keys,keys)
@@ -50,7 +63,7 @@ class VerklePatriciaTree:
                 node.update(values)
             elif len(prefix)==0:      #keys与node.keys完全不同
                 bNode = BranchNode()
-                bNode[keys[0]]=LeafNode(keys[1:],values)
+                bNode[keys[0]]=LeafNode(keys[1:],values,fullkeys)
                 bNode[node.keys[0]]=node
                 node.keys = node.keys[1:]
                 self._modifyParent(node,bNode)
@@ -60,26 +73,26 @@ class VerklePatriciaTree:
                 eNode.next,bNode.parent = bNode,eNode
                 self._modifyParent(node,eNode)
                 if prefix == keys:
-                    eNode.value = LeafNode(keys[len(prefix):],values)
+                    eNode.value = LeafNode(keys[len(prefix):],values,fullkeys)
                     bNode[node.keys[len(prefix)]] = node
                     node.key = node.key[len(prefix)+1:]
                 elif prefix == node.keys:
                     eNode.value = node
                     node.keys = node.keys[len(prefix):]
-                    bNode[keys[len(prefix)]] = LeafNode(keys[len(prefix)+1:],values)
+                    bNode[keys[len(prefix)]] = LeafNode(keys[len(prefix)+1:],values,fullkeys)
                 else:
-                    bNode[keys[len(prefix)]] = LeafNode(keys[len(prefix)+1:], values)
+                    bNode[keys[len(prefix)]] = LeafNode(keys[len(prefix)+1:], values,fullkeys)
                     bNode[node.keys[len(prefix)]] = node
                     node.key = node.key[len(prefix) + 1:]
         elif node is ExtensionNode:
             if node.nibbs == keys:
                 if node.value is Node:
-                    node.value = LeafNode(keys,values)
+                    node.value = LeafNode(keys,values,fullkeys)
                     node.value.parent = node
                 else:
                     node.value.update(values)
             elif node.nibbs.startsWith(keys):
-                eNode = ExtensionNode(keys,node,LeafNode(keys,values))
+                eNode = ExtensionNode(keys,node,LeafNode(keys,values,fullkeys))
                 node.nibbs = node.nibbs[len(keys):]
             elif keys.startsWith(node.nibbs):
                 keys = keys[len(node.nibbs):]
@@ -87,12 +100,12 @@ class VerklePatriciaTree:
             else:
                 bNode = BranchNode()
                 self._modifyParent(node,bNode)
-                bNode[keys[0]] = LeafNode(keys[1:],values)
+                bNode[keys[0]] = LeafNode(keys[1:],values,fullkeys)
                 bNode[node.nibbs[0]] = node
                 node.nibbs = node.nibbs[1:]
         elif node is BranchNode:
             if node[keys[0]] is None:
-                node[keys[0]] = LeafNode(keys[1:],values)
+                node[keys[0]] = LeafNode(keys[1:],values,fullkeys)
             else:
                 keys = keys[1:]
                 self.insert(keys,values,node[keys[0]])
@@ -131,6 +144,36 @@ class VerklePatriciaTree:
             nodeOrigin.parent.next = nodeNew
             nodeNew.parent = nodeOrigin.parent
             nodeNew.parentKey = -1
+
+    def _computeCommitment(self,node=None):
+        if node is None:
+            node = self.root
+        if node is Node:
+            return
+        if isinstance(node,LeafNode):
+            nodehash = [dumb25519.hash_to_scalar('verkle', node)]
+            node.poly, node.scalar, node.commitment = self._computePoly(nodehash)
+        elif isinstance(node,ExtensionNode):
+            if node.next is None:
+                node.poly,node.scalar,node.commitment = node.next.poly,node.next.scalar,node.next.commitment
+            else:
+                self._computeCommitment(node.next)
+                nodehash = [dumb25519.hash_to_scalar('verkle', node.next),dumb25519.hash_to_scalar('verkle', node.value)]
+                node.poly, node.scalar, node.commitment = self._computePoly(nodehash)
+        elif isinstance(node,BranchNode):
+            for i in range(node.entries):
+                if node.entries[i] is None:
+                    continue
+                self._computeCommitment(node.entries[i])
+            nodehash = [dumb25519.hash_to_scalar('verkle', node) for node in node.entries if node is not None]
+            node.poly,node.scalar,node.commitment = self._computePoly(nodehash)
+
+    def _computePoly(self,nodehash):
+        coords = [(Scalar(j + 1), hash) for j, hash in enumerate(nodehash)]
+        poly = lagrange(coords)  # polynomial coefficients
+        scalar = dumb25519.random_scalar()  # blinding factor
+        commitment = poly ** self.G + scalar * polycommit.H  # the actual commitment
+        return poly,scalar,commitment
 
 
 from graphviz import Digraph, nohtml
@@ -189,6 +232,7 @@ class VPTView:
                     continue
                 id += 1
                 self.create(vpt,node.entries[i],self.g,gid+':f'+str(i))
+
 
 
 
