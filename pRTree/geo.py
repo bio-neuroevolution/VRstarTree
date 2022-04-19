@@ -9,8 +9,24 @@ class Geometry:
         if self.values is None:self.values = []
     def clone(self):
         return copy.deepcopy(self)
+    def __getitem__(self, item):
+        if not isinstance(item,int):
+            return 0
+        if int(item)>=len(self.values):
+            return 0
+        return self.values[int(item)]
+    def __setitem__(self, key, value):
+        if not isinstance(key, int):return
+        if int(key) >= len(self.values):
+            if not Geometry.DIM_EXTENSIBLE:return
+            self.values = self.values+[0]*(int(key)+1-len(self.values))
+        self.values[int(key)] = value
+
     def mbr(self):
         return None
+    def union(self,g):
+        pass
+
 
 EMPTY = Geometry()
 
@@ -25,6 +41,15 @@ class Rectangle(Geometry):
         return [self.values[dimension*2],self.values[dimension*2+1]]
     def mbr(self):
         return self.clone()
+    def union(self,g):
+        if g is None:
+            return self.clone()
+        r = Rectangle(self.dimension)
+        for i in range(self.dimension):
+            r[i*2] = min(self.values[i*2],g.values[i*2])
+            r[i*2+1] = max(self.values[i*2+1],g.values[i*2+1])
+        return r
+
 
 
 class Point(Rectangle):
