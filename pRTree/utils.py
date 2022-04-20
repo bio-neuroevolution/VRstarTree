@@ -1,5 +1,6 @@
 
 import filecmp
+import numpy as np
 
 def dict_setattr(d:dict,keys:str,value):
     '''
@@ -65,3 +66,19 @@ class Configuration:
                 self.dict.__setattr__(strs[0].trim(),strs[1].trim())
         except Exception as e:
             raise e
+
+
+class Collections:
+    def all(cls,func,datas : list):
+        if datas is None or len(datas)<=0:
+            return True
+        for d in datas:
+            if not func(d):return False
+        return True
+    def any(cls,func,datas:list):
+        if datas is None or len(datas) <= 0:return False
+        for d in datas:
+            if func(d): return True
+        return False
+
+

@@ -1,5 +1,6 @@
 from geo import Rectangle
-from utils import Configuration
+from utils import Configuration, Collections
+import numpy as np
 
 class Entry:
     def __init__(self,id,mbr,datas):
@@ -33,8 +34,12 @@ class RTree:
             return
         self._insert(entry,[self.root])
     def _insert(self,entry,nodes):
-        intersections = Rectangle.intersections(entry.mbr,[node.mbr for node in nodes])
-        hasIntersections = [not inter.isEmpty() for inter in intersections]
+        scores = self._score(entry,nodes,len(nodes)>=self.contex.max_children_num)
+        scoreIndexes = np.argmax(scores)
+        overlaps = Rectangle.intersections(entry.mbr,[node.mbr for node in nodes])
+        hasoverlaps = [not overlap.isEmpty() for overlap in overlaps]
+        if Collections.all(lambda d:not d,hasoverlaps): #没有重叠
+
 
 
 
