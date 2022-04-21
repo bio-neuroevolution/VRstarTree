@@ -80,5 +80,11 @@ class Collections:
         for d in datas:
             if func(d): return True
         return False
+    def map(cls,func,iterable,*params,**kwargs):
+        for e in iterable:
+            func(e,params,kwargs)
+    def assign(cls,prop,value,iterable):
+        for e in iterable:
+            e.__setattr__(prop,value)
 
 

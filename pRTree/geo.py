@@ -9,6 +9,9 @@ class Geometry:
         if self.values is None:self.values = []
     def clone(self):
         return copy.deepcopy(self)
+    def empty(self):
+        return self.values is None or len(self.values)<=0
+
     def __getitem__(self, item):
         if not isinstance(item,int):
             return 0
@@ -24,11 +27,11 @@ class Geometry:
 
     def mbr(self):
         return None
-    def union(self,g):
+    def union(self,*gs):
         pass
 
-
 EMPTY = Geometry()
+
 
 class Rectangle(Geometry):
     def __init__(self,dimension=2,values=None):
@@ -45,11 +48,21 @@ class Rectangle(Geometry):
         if g is None:
             return self.clone()
         r = Rectangle(self.dimension)
-        for i in range(self.dimension):
-            r[i*2] = min(self.values[i*2],g.values[i*2])
-            r[i*2+1] = max(self.values[i*2+1],g.values[i*2+1])
-        return r
+        if isinstance(g,Rectangle):
+            for i in range(self.dimension):
+                r[i*2] = min(self.values[i*2],g.values[i*2])
+                r[i*2+1] = max(self.values[i*2+1],g.values[i*2+1])
+            return r
+        elif isinstance(g,list):
+            r = Rectangle(self.dimension)
+            for rect in g:
+                for i in range(self.dimension):
+                    r[i * 2] = min(self.values[i * 2], rect.values[i * 2])
+                    r[i * 2 + 1] = max(self.values[i * 2 + 1], rect.values[i * 2 + 1])
+            return r
+        else: return self.clone()
 
+EMPTY_RECT = Rectangle()
 
 
 class Point(Rectangle):
