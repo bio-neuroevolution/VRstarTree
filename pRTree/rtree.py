@@ -1,5 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from geo import Rectangle
 import geo
+import alg
 from utils import Configuration, Collections
 import numpy as np
 
@@ -38,14 +42,21 @@ class RNode:
         return self.children
     def contains(self,node):
         return node in self.children
+    def isLeaf(self):
+        return len(self.children)<=0
     def size(self):
         return 0 if self.children is None else len(self.children)
 
 
 
+
 class RTree:
     MAX_CHILDREN_DEFAULT = 16
-    SELECTION_DEFAULT_ = 'select'
+    SELECTION_DEFAULT = 'select_rstar'
+    MERGE_DEFAULT = "merge_nodes"
+    SPLIT_DEFAULT = 'split_node'
+
+    algs = {'select_rstar': alg.select_nodes_astar,'merge_nodes':alg.merge_nodes,'SPLIT_DEFAULT':alg.split_node}
 
     def __init__(self,range : Rectangle,contex : Configuration):
         self.range = range
@@ -59,29 +70,48 @@ class RTree:
             return
         self._insert(entry,[self.root])
     def _insert(self,entry,nodes:list):
-        if nodes is None or len(nodes)<=0:
-            self.root = RNode(entry.mbr, parent=None, children=[], entries=[entry])
-            return
-
+        '''
+        插入数据到节点列表中去
+        :param entry Entry 数据对象
+        :param nodes list of RNode 节点列表
+        '''
+        #执行选择节点过程，没有选中的话就创建一个，如果子节点数太多，则执行合并操作
         node = self._doSelection(entry,nodes)
         if node is None:
            node = RNode(entry.mbr, parent=None, children=[], entries=[entry])
-
-        nodes = nodes[0].parent.addChilds(node)
+           nodes = nodes[0].parent.addChilds(node)
         if len(nodes) > self.contex.max_children_num:
             nodes = self._doMerge(nodes)
 
-        if node.size()<=0: #叶子节点
+        # 如果是叶子节点，加入数据对象，若数据对象太多，则执行分裂操作
+        if node.isLeaf():
+            node.addEntries(entry)
+            if len(node.entries)>self.context.max_entries_num:
+                cnodes = self._doSplit(node)
+                node.parent.split(node,cnodes)
+                return cnodes[0]
+            return node
+
+        return self._insert(entry,node.children)
+
+
+    def _doSelection(self,entry,nodes):
+        algName = self.contxt.select_nodes_func if self.contxt.select_nodes_func is not None else RTree.SELECTION_DEFAULT
+        method = RTree.algs[algName]
+        return method(self,entry,nodes)
+
+    def _doMerge(self,nodes):
+        algName = self.contxt.merge_nodes_func if self.contxt.merge_nodes_func is not None else RTree.MERGE_DEFAULT
+        method = RTree.algs[algName]
+        return method(self, nodes)
+
+    def _doSplit(self,node):
+        algName = self.contxt.split_node_func if self.contxt.split_node_func is not None else RTree.SPLIT_DEFAULT
+        method = RTree.algs[algName]
+        return method(self, node)
 
 
 
-
-
-        scores = self._score(entry,nodes,len(nodes)>=self.contex.max_children_num)
-        scoreIndexes = np.argmax(scores)
-        overlaps = Rectangle.intersections(entry.mbr,[node.mbr for node in nodes])
-        hasoverlaps = [not overlap.isEmpty() for overlap in overlaps]
-        if Collections.all(lambda d:not d,hasoverlaps): #没有重叠
 
 
 
