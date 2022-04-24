@@ -82,13 +82,13 @@ class RTree:
            nodes = nodes[0].parent.addChilds(node)
         if len(nodes) > self.contex.max_children_num:
             nodes = self._doMerge(nodes)
+            node = self._doSelection(entry, nodes)
 
         # 如果是叶子节点，加入数据对象，若数据对象太多，则执行分裂操作
         if node.isLeaf():
             node.addEntries(entry)
             if len(node.entries)>self.context.max_entries_num:
                 cnodes = self._doSplit(node)
-                node.parent.split(node,cnodes)
                 return cnodes[0]
             return node
 

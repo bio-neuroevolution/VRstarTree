@@ -36,6 +36,11 @@ EMPTY = Geometry()
 class Rectangle(Geometry):
     def __init__(self,dimension=2,values=None):
         super(Rectangle,self).__init__(dimension,values)
+    def update(self,dimension,lower,upper):
+        if len(self.values)<2*(dimension+1):
+            self.values = self.values + [0]*((dimension+1)*2-len(self.values))
+        self.values[2*dimension] = lower
+        self.values[2*dimension+1] = upper
     def boundary(self,dimension):
         if self.values is None or len(self.values)<=0:
             return None
@@ -61,6 +66,33 @@ class Rectangle(Geometry):
                     r[i * 2 + 1] = max(self.values[i * 2 + 1], rect.values[i * 2 + 1])
             return r
         else: return self.clone()
+    def unions(cls,gs):
+        r = EMPTY_RECT
+        if gs is None or len(gs) <= 0: return r
+        for g in gs:
+            r = r.union(g)
+        return r
+    def volume(self)->float:
+        v = 1.
+        for i in range(self.dimension):
+            v *= abs(self.values[i*2+1]-self.values[i*2])
+        return v
+    def volumes(cls,gs):
+        if gs is None or len(gs)<=0:return 0.
+        r = EMPTY_RECT
+        for g in gs:
+            r = r.union(g)
+        return r.volume()
+    def overlop(self,r):
+        re = Rectangle(dimension=self.dimension)
+        for i in range(self.dimension):
+            lower = max(self.lower(i),r.lower(i))
+            upper = min(self.upper(i),r.upper(i))
+            if lower > upper:return None
+            re.update(i,lower,upper)
+        return re
+    def isOverlop(self,r):
+        return self.overlop(r) is not None
 
 EMPTY_RECT = Rectangle()
 
