@@ -45,6 +45,7 @@ class Block:
         self.start_time = min((x.ts for x in transactions))
         self.end_time = max((x.ts for x in transactions))
         self.timestamp = self.end_time
+        self.statetrieRoot = self._create_vpt(transactions)
         self.statetrieRoot,self.trantrieRoot,self.trajetrieRoot = None,None,None
 
     def _create_vpt(self,transactions):
@@ -54,6 +55,9 @@ class Block:
             vpt.insert(acc.id,acc)
         self.statetrieRoot = vpt
         return vpt
+
+    def _create_tran_trie(self,transactions):
+        pass
 
     def _create_accounts(self,transactions):
         accounts = {}

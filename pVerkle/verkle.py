@@ -3,10 +3,19 @@ import polycommit
 import utils
 from dumb25519 import Scalar
 from polynomial import lagrange
+from rtree import RTree
 
 
 class Node:
     def __init__(self):
+        '''
+        VerklePatriciaTree的节点
+        :param parent Node 父节点
+        :param parentKey list of byte 父节点的key
+        :param commitment 向量承诺值
+        :param poly
+        :param scalar
+        '''
         self.parent = None
         self.parentKey = -1
         self.commitment = 0
@@ -15,6 +24,12 @@ class Node:
 
 class LeafNode(Node):
     def __init__(self,keys,values,fullkeys):
+        """
+        叶节点
+        :param keys 叶节点的key
+        :param values 叶节点的值
+        :param fullkeys 叶子节点的全key
+        """
         self.keys = keys
         self.values = values
         self.fullkeys = fullkeys
@@ -25,17 +40,34 @@ class InternalNode(Node):
     pass
 class ExtensionNode(InternalNode):
     def __init__(self, nibbs,next=None,value=None):
+        '''
+        扩展节点
+        :param nibbs list of byte 扩展节点的key
+        :param next Node 下一个节点
+        :param value 扩展节点关联的值
+        '''
         self.nibbs = nibbs
         self.next = next
         self.value = value
         if self.value is not None:
             self.value.parent = self
 class BranchNode(InternalNode):
+    ENTRY_NUM = 256
     def __init__(self):
-        self.entries = []*256
+        '''
+        分支节点
+        '''
+        self.entries = [-1]*BranchNode.ENTRY_NUM
     def __getitem__(self, key):
+        '''
+        访问入口
+        '''
         return self.entries[key[0]]
+
     def __setitem__(self, key, node):
+        '''
+        修改入口
+        '''
         self.entries[key] = node
         node.parent = self
         node.parentKey = key
@@ -175,6 +207,9 @@ class VerklePatriciaTree:
         commitment = poly ** self.G + scalar * polycommit.H  # the actual commitment
         return poly,scalar,commitment
 
+
+class VerkleRTree(RTree):
+    pass
 
 from graphviz import Digraph, nohtml
 
