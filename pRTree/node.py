@@ -1,6 +1,5 @@
 from geo import Rectangle
 import geo
-import alg
 from utils import Configuration, Collections
 
 

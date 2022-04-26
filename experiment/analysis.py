@@ -26,7 +26,7 @@ def run_query_transaction():
     #创建和分配账户
     account_name,account_dis = dataLoader.create_account_name(context.account_count,context.account_length)
     accs = np.random.choice(account_name,len(transactions))
-    diss = [account_dis[account_name.find(a)] for a in accs]
+    diss = [account_dis[account_name.index(a)] for a in accs]
     for i,tr in enumerate(transactions):
         tr.account = accs[i]
         tr.account_dis = diss[i]

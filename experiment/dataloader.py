@@ -52,10 +52,11 @@ class PocemonLoader:
         :return (list,list) 账户名集，海明距离集
         """
         symbols = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
-        base = ['a']*length
+        base = "".join(['a']*length)
         names = [''.join(np.random.choice(symbols, length)) for i in range(count)]
         dis  = [self.hamming_distance(s,base) for s in names]
-        dis = (dis - min(dis))/(max(dis)-min(dis))
+        mindis,maxdis = min(dis),max(dis)
+        dis = [(d - mindis)/(maxdis-mindis) for d in dis]
         return names,dis
 
     def hamming_distance(self,s1, s2):

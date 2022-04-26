@@ -4,29 +4,55 @@ import json
 import math
 from random import randint
 
+from node import RNode, Entry
 from rtree import RTree
 from verkle import VerklePatriciaTree
 import geo
 
-class BTransaction:
+class BTransaction(Entry):
     def __init__(self,acocunt,log,lat,ts,datas):
-        self.account = acocunt
+        """
+        交易信息
+        :param account 账户Id
+        :param log 经度
+        :param lat 维度
+        :param ts  交易时间
+        :param datas 交易数据
+        """
+        self.acocunt = acocunt
+        self.id = acocunt
         self.log = log
         self.lat = lat
         self.ts = ts
         self.datas = datas
         self.mbr = geo.Rectangle(dimension=3,values=[self.log,self.log,self.lat,self.lat,self.ts,self.ts])
-        self.account_dis = 0
+
 class BRecord(BTransaction):
-    ACC_LENGTH = 32
-    def __init__(self,acocunt,log,lat,ts):
+    def __init__(self,acocunt,log,lat,ts,account_dis):
+        """
+        轨迹信息
+        :account str 账户
+        :log 经度
+        :lat 纬度
+        :ts 时间戳
+        :account_dis 账户值
+        """
         self.account = acocunt
+        self.id = acocunt
         self.log = log
         self.lat = lat
         self.ts = ts
+        self.account_dis = account_dis
 
 class BAccount:
     def __init__(self,id,ts,log,lat):
+        """
+        账户信息
+        :param id 账户I
+        :param log 经度
+        :param lat 纬度
+        :param ts  时间戳
+        """
         self.id = id
         self.log = log
         self.lat = lat
@@ -34,7 +60,7 @@ class BAccount:
 
 
 class Block:
-    def __init__(self,context,parent_hash,transactions,proof,range):
+    def __init__(self,context,parent_hash,transactions,proof):
         """
         区块
         :param parent_hash
@@ -48,7 +74,8 @@ class Block:
         self.end_time = max((x.ts for x in transactions))
         self.timestamp = self.end_time
         self.statetrieRoot = self._create_vpt(transactions)
-        self.statetrieRoot,self.trantrieRoot,self.trajetrieRoot = None,None,None
+        self.trantrieRoot = self._create_tran_trie(transactions)
+        self.trajetrieRoot = self._create_traj_trie(transactions)
 
     def _create_vpt(self,transactions):
         accounts = self._create_accounts(transactions)
@@ -62,14 +89,22 @@ class Block:
     def _create_tran_trie(self,transactions):
         mbr = geo.Rectangle.unions([tx.mbr for tx in transactions])
         tree = RTree()
+        for tr in transactions:
+            tree.insert(tr)
+        return tree
+
+    def _create_traj_trie(self,transactions):
+        tree = RTree()
+        for tr in transactions:
+            tree.insert(BRecord(tr.account,tr.log,tr.lat,tr.ts))
 
     def _create_accounts(self,transactions):
         accounts = {}
         for tx in transactions:
             if tx.account not in accounts:
                 accounts[tx.account] = BAccount(tx.account,tx.ts,tx.log,tx.lat)
-            elif accounts[tx.tx.account].ts < tx.ts:
-                accounts[tx.tx.account] = BAccount(tx.account,tx.ts,tx.log,tx.lat)
+            elif accounts[tx.account].ts < tx.ts:
+                accounts[tx.account] = BAccount(tx.account,tx.ts,tx.log,tx.lat)
         return list(accounts.values())
 
 
@@ -80,9 +115,10 @@ class BlockChain:
     def __init__(self,context,blocksize=20,transactions=[]):
         self.context = context
         self.blocksize = blocksize
-        self._create_blocks(transactions)
         self.blocks = {}
         self.header = None
+        self._create_blocks(transactions)
+
 
     @staticmethod
     def hash(block):
