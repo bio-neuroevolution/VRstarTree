@@ -46,13 +46,21 @@ class Property:
         self.constraints = constraints
         set_dict_attr_function()
 class Configuration:
-    def __init__(self,filename:str,filencode:str='utf-8',*props):
+    def __init__(self,filename:str='',filencode:str='utf-8',*props,**kwargs):
         self.filename = filename
         self.filencode = filencode
         self.props =props
         if self.props is None:self._props = []
         self.dict = {}
         self._load()
+
+        if len(kwargs) > 0:
+            for key,value in enumerate(kwargs):
+                self.dict[key] = value
+
+    def __getitem__(self, item):
+        return self.dict.get(item)
+
     def _load(self):
         if self.filename is None or self.filename == '':
             return

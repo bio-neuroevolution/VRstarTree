@@ -4,6 +4,7 @@ import json
 import math
 from random import randint
 
+from rtree import RTree
 from verkle import VerklePatriciaTree
 import geo
 
@@ -32,7 +33,7 @@ class BAccount:
 
 
 class Block:
-    def __init__(self,parent_hash,transactions,proof):
+    def __init__(self,context,parent_hash,transactions,proof,range):
         """
         区块
         :param parent_hash
@@ -56,8 +57,10 @@ class Block:
         self.statetrieRoot = vpt
         return vpt
 
+
     def _create_tran_trie(self,transactions):
-        pass
+        mbr = geo.Rectangle.unions([tx.mbr for tx in transactions])
+        tree = RTree()
 
     def _create_accounts(self,transactions):
         accounts = {}
@@ -73,7 +76,8 @@ class Block:
 
 
 class BlockChain:
-    def __init__(self,blocksize=20,transactions=[]):
+    def __init__(self,context,blocksize=20,transactions=[]):
+        self.context = context
         self.blocksize = blocksize
         self._create_blocks(transactions)
         self.blocks = {}
@@ -98,7 +102,7 @@ class BlockChain:
         parent_hash = None
         for i in range(block_num):
             tx = transactions[i*self.blocksize: (i+1)*self.blocksize+1 if (i+1)*self.blocksize<len(transactions) else -1]
-            block = Block(parent_hash,tx,proof = randint(1, 1000))
+            block = Block(self.context,parent_hash,tx,proof = randint(1, 1000))
             hash = BlockChain.hash(block)
             self.blocks[hash] = block
             if parent_hash is None:
