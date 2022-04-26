@@ -55,10 +55,12 @@ class Configuration:
         self._load()
 
         if len(kwargs) > 0:
-            for key,value in enumerate(kwargs):
+            for key,value in kwargs.items():
                 self.dict[key] = value
 
     def __getitem__(self, item):
+        return self.dict.get(item)
+    def __getattr__(self, item):
         return self.dict.get(item)
 
     def _load(self):

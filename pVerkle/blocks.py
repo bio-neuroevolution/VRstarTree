@@ -16,6 +16,7 @@ class BTransaction:
         self.ts = ts
         self.datas = datas
         self.mbr = geo.Rectangle(dimension=3,values=[self.log,self.log,self.lat,self.lat,self.ts,self.ts])
+        self.account_dis = 0
 class BRecord(BTransaction):
     ACC_LENGTH = 32
     def __init__(self,acocunt,log,lat,ts):

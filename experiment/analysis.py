@@ -14,14 +14,23 @@ from utils import Configuration
 
 def run_query_transaction():
     # 配置
-    context = Configuration({})
+    context = Configuration(max_children_num=16,account_length=16,account_count=200)
 
     # 读取数据
     dataLoader = PocemonLoader()
     df = dataLoader.refresh()
-    df = dataLoader.extend_df(repeat_times=1)
+    df = dataLoader.extend_df(df=df,repeat_times=1)
     df = dataLoader.normalize(df)
-    transactions = [BTransaction(row['type'],row['log',row['lat'],row['ts'],None]) for row in df.rows]
+    transactions = [BTransaction(row['type'],row['lon'],row['lat'],row['ts'],None) for index,row in df.iterrows()]
+
+    #创建和分配账户
+    account_name,account_dis = dataLoader.create_account_name(context.account_count,context.account_length)
+    accs = np.random.choice(account_name,len(transactions))
+    diss = [account_dis[account_name.find(a)] for a in accs]
+    for i,tr in enumerate(transactions):
+        tr.account = accs[i]
+        tr.account_dis = diss[i]
+
 
     # 创建区块链
     chain  = BlockChain(context,blocksize=40,transactions=transactions)
@@ -45,3 +54,6 @@ def run_query_transaction():
         chain.query_transations(qcenters[i],qlengths[i])
         spans.append(time.time()-st)
     print(np.average(spans))
+
+if __name__ == '__main__':
+    run_query_transaction()

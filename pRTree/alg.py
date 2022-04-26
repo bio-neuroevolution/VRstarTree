@@ -2,7 +2,8 @@
 import numpy as np
 import geo
 import sys
-from rtree import RNode
+
+from node import RNode
 
 
 def select_nodes_rstar(tree,entry,nodes):

@@ -44,3 +44,28 @@ class PocemonLoader:
         df[['ts']].apply(max_min_scaler)
         return df
 
+    def create_account_name(self,count,length)->(list,list):
+        """
+        创建账户信息
+        :param count int 账户数
+        :param length int 每个账户位数
+        :return (list,list) 账户名集，海明距离集
+        """
+        symbols = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+        base = ['a']*length
+        names = [''.join(np.random.choice(symbols, length)) for i in range(count)]
+        dis  = [self.hamming_distance(s,base) for s in names]
+        dis = (dis - min(dis))/(max(dis)-min(dis))
+        return names,dis
+
+    def hamming_distance(self,s1, s2):
+        b1, b2 = bytearray(s1, encoding='utf-8'), bytearray(s2, encoding='utf-8')
+        diff = 0
+        for i in range(len(b1)):
+            if b1[i] != b2[i]:
+                diff += bin(b1[i] ^ b2[i]).count("1")
+        return diff
+
+
+
+
