@@ -21,7 +21,7 @@ def select_nodes_rstar(tree,entry,nodes):
         for i,node in enumerate(nodes):
             mbrs = [node.mbr for j,node in enumerate(nodes) if j !=i]
             mbr = node.mbr.union(entry.mbr)
-            overlop_areas.append(sum([m.overlop_area(mbr) for m in mbrs]))
+            overlop_areas.append(sum([m.overlop(mbr).volume() for m in mbrs]))
             areas.append(mbr.volume()-node.mbr.volume())
         # 所有数据加入方案的重叠面积从小到大排序
         overlop_areas_index = np.argsort(overlop_areas)
@@ -41,7 +41,7 @@ def select_nodes_rstar(tree,entry,nodes):
             if area > areas[index]:
                 area = areas[index]
                 rindex = index
-        return node[rindex]
+        return nodes[rindex]
     else:
         # 尝试将数据加入到每个节点，计算加入后与其它节点的重叠面积和增长面积
         areas = []
@@ -49,7 +49,8 @@ def select_nodes_rstar(tree,entry,nodes):
             mbr = node.mbr.union(entry.mbr)
             areas.append(mbr.volume() - node.mbr.volume())
         # 所有数据加入方案的重叠面积从小到大排序
-        return nodes[np.argmin(areas)]
+        am = np.argmin(areas)
+        return nodes[am]
 
 def merge_nodes_ref(tree,nodes):
     '''
@@ -73,8 +74,8 @@ def merge_nodes_ref(tree,nodes):
 
     parent = nodes[0].parent
     parent.children = []
-    p1 = RNode(parent=nodes[0].parent,children=nodes[:i+1])
-    p2 = RNode(parent=nodes[0].parent,children=nodes[i+2:])
+    p1 = RNode(parent=nodes[0].parent,children=nodes[:i+1],entries=[])
+    p2 = RNode(parent=nodes[0].parent,children=nodes[i+2:],entries=[])
     return parent.children
 
 def split_node_rstar(tree,node):
@@ -87,11 +88,13 @@ def split_node_rstar(tree,node):
     # 对每个数据对象的，每个轴，两个边界上分别尝试分裂，保留重叠面积较小的方案，然后选择其中总面积最小的方案
     plans,min_overlop = [],0
     for entry in node.entries:
-        for d in entry.mbr.dimension:
+        for d in range(entry.mbr.dimension):
             bound = entry.mbr.boundary(d)
             for i in range(2):
-                g1 = [e for e in node.entries if abs(e.mbr.upper(d)-bound[i])<=abs(e.mbr.lower(d)-bound[i])]
-                g2 = node.entries - g1
+                g1 = [e for e in node.entries if e.mbr.rela_corss(d,bound[i])==0]
+                g2 = list(set(node.entries) - set(g1))
+                if len(g1)<=0 or len(g2)<=0:
+                    continue
                 mbr1 = geo.Rectangle.unions([g.mbr for g in g1])
                 mbr2 = geo.Rectangle.unions([g.mbr for g in g2])
                 area = mbr1.volume()+mbr2.volume()
@@ -106,11 +109,16 @@ def split_node_rstar(tree,node):
             minarea,optima = area,p
 
     entry,dimension,bound,area,overlop,g1,g2 = optima
-    parent,node.parent = node.parent,None
-    node.parent.children = node.parent.children - [node]
-    n1 = RNode(parent=parent,entries=g1)
-    n2 = RNode(parent=parent,entries=g2)
-    return [n1,n2]
+    if node.parent is None:
+        tree.root = RNode()
+        tree.children = [RNode(parent=tree.root,children=[],entries=g1),RNode(parent=tree.root,children=[],entries=g2)]
+        return tree.root.children
+    else:
+        node.parent.children = list(set(node.parent.children) - set([node]))
+        parent,node.parent = node.parent,None
+        n1 = RNode(parent=parent,children=[],entries=g1)
+        n2 = RNode(parent=parent,children=[],entries=g2)
+        return parent.children
 
 
 

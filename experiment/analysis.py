@@ -20,6 +20,7 @@ def run_query_transaction():
     dataLoader = PocemonLoader()
     df = dataLoader.refresh()
     df = dataLoader.extend_df(df=df,repeat_times=1)
+    #df = (df - df.min()) / (df.max() - df.min())
     df = dataLoader.normalize(df)
     transactions = [BTransaction(row['type'],row['lon'],row['lat'],row['ts'],None) for index,row in df.iterrows()]
 

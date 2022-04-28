@@ -22,7 +22,7 @@ class PocemonLoader:
         shp = hk_poke_df.shape
         hk_poke_df.dropna(axis=0, how='any', inplace=True)
         print(shp, '-(dropna)>', hk_poke_df.shape)
-        hk_poke_df['type'] = hk_poke_df['type'].apply(lambda x: str(int(x))).astype(str)
+        hk_poke_df['type'] = hk_poke_df['type'].apply(lambda x: str(int(x))).astype(int)
         hk_poke_df['ts'] = hk_poke_df['ts'].astype(int)
         return hk_poke_df.reset_index(drop=True)
 
@@ -38,10 +38,11 @@ class PocemonLoader:
         return a
 
     def normalize(self,df):
-        max_min_scaler = lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))
-        df[['lat']].apply(max_min_scaler)
-        df[['lon']].apply(max_min_scaler)
-        df[['ts']].apply(max_min_scaler)
+        cols = ['lat','lon','ts']
+        for col in cols:
+            maxv = df[col].max()
+            minv = df[col].min()
+            df[col] = (df[col]-minv)/(maxv-minv)
         return df
 
     def create_account_name(self,count,length)->(list,list):

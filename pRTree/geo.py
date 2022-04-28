@@ -30,6 +30,9 @@ class Geometry:
     def union(self,*gs):
         pass
 
+    def __str__(self):
+        return str(self.values)
+
 EMPTY = Geometry()
 
 
@@ -47,11 +50,37 @@ class Rectangle(Geometry):
         if dimension*2 > len(self.values):
             return None
         return [self.values[dimension*2],self.values[dimension*2+1]]
+    def upper(self,dimension):
+        return self.values[2*dimension+1]
+    def lower(self,dimension):
+        return self.values[2*dimension]
     def mbr(self):
         return self.clone()
+    def rela_corss(self,dimension,pos):
+        '''
+        在某个维度上的交叉关系
+        :param dimension int 维
+        :param pos  float 维上的值
+        :return 矩阵相对于pos的位置，0表示在pos左边，1表示在右边
+        '''
+        b = self.boundary(dimension)
+        if b[0] == b[1]:
+            return 0 if b[0]<pos else 1
+        elif b[0] <= pos and b[1] <= pos:
+            return 0
+        elif b[0] > pos and b[1] > pos:
+            return 1
+        else:
+            return 0 if abs(b[0]-pos)>=abs(b[1]-pos) else 1
+
     def union(self,g):
         if g is None:
             return self.clone()
+        elif g.empty():
+            return self.clone()
+        elif self.empty():
+            return g.clone()
+
         r = Rectangle(self.dimension)
         if isinstance(g,Rectangle):
             for i in range(self.dimension):
@@ -66,6 +95,7 @@ class Rectangle(Geometry):
                     r[i * 2 + 1] = max(self.values[i * 2 + 1], rect.values[i * 2 + 1])
             return r
         else: return self.clone()
+    @classmethod
     def unions(cls,gs):
         r = EMPTY_RECT
         if gs is None or len(gs) <= 0: return r
@@ -73,6 +103,7 @@ class Rectangle(Geometry):
             r = r.union(g)
         return r
     def volume(self)->float:
+        if self.empty():return 0
         v = 1.
         for i in range(self.dimension):
             v *= abs(self.values[i*2+1]-self.values[i*2])
@@ -88,7 +119,7 @@ class Rectangle(Geometry):
         for i in range(self.dimension):
             lower = max(self.lower(i),r.lower(i))
             upper = min(self.upper(i),r.upper(i))
-            if lower > upper:return None
+            if lower > upper:return EMPTY_RECT
             re.update(i,lower,upper)
         return re
     def isOverlop(self,r):

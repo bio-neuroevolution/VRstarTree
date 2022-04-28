@@ -16,7 +16,7 @@ class Entry:
         self.datas = datas
 
 class RNode:
-    def __init__(self,mbr : Rectangle,parent=None,children : list=[],entries:list=[]):
+    def __init__(self,mbr=None,parent=None,children=[],entries=[]):
         '''
         R树节点
         mbr Rectangle 时空范围
@@ -31,16 +31,20 @@ class RNode:
         if self.mbr is None: self.mbr = geo.EMPTY_RECT
         if len(children)>0:
             Collections.assign('parent',self,self.children)
-            self.mbr = self.mbr.union([node.mbr for node in self.children])
+            self.mbr = self.mbr.unions([node.mbr for node in self.children])
+        if len(entries)>0:
+            self.mbr = Rectangle.unions([e.mbr for e in entries])
         if self.parent is not None:
-            self.parent.children.apppend(self)
+            self.parent.children.append(self)
+    def __str__(self):
+        return str(self.mbr)
     def addEntries(self,*entries):
         """
         添加数据
         entries list of Entry 数据对象集
         """
         if entries is None or len(entries)<=0:return
-        newentries = entries - self.entries
+        newentries = list(set(list(entries)) - set(self.entries))
         self.entries = self.entries + newentries
         self._update_mbr()
     def getEntries(self,ids):
@@ -117,5 +121,6 @@ class RNode:
             return len(self.children)
         else:
             return len(self.entries)
+
 
 

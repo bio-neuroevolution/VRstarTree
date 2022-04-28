@@ -1,6 +1,5 @@
 import dumb25519
 import polycommit
-import utils
 from dumb25519 import Scalar
 from polynomial import lagrange
 from rtree import RTree
@@ -30,6 +29,7 @@ class LeafNode(Node):
         :param values 叶节点的值
         :param fullkeys 叶子节点的全key
         """
+        super(LeafNode,self).__init__()
         self.keys = keys
         self.values = values
         self.fullkeys = fullkeys
@@ -37,7 +37,9 @@ class LeafNode(Node):
         self.values = values
 
 class InternalNode(Node):
-    pass
+    def __init__(self):
+        super(InternalNode, self).__init__()
+
 class ExtensionNode(InternalNode):
     def __init__(self, nibbs,next=None,value=None):
         '''
@@ -46,6 +48,7 @@ class ExtensionNode(InternalNode):
         :param next Node 下一个节点
         :param value 扩展节点关联的值
         '''
+        super(ExtensionNode, self).__init__()
         self.nibbs = nibbs
         self.next = next
         self.value = value
@@ -57,20 +60,23 @@ class BranchNode(InternalNode):
         '''
         分支节点
         '''
+        super(BranchNode, self).__init__()
         self.entries = [-1]*BranchNode.ENTRY_NUM
     def __getitem__(self, key):
         '''
         访问入口
         '''
-        return self.entries[key[0]]
+        v = self.entries[ord(key[0])]
+        return None if v is None or v == -1 else v
 
     def __setitem__(self, key, node):
         '''
         修改入口
         '''
-        self.entries[key] = node
-        node.parent = self
-        node.parentKey = key
+        self.entries[ord(key)] = node
+        if node is not None:
+            node.parent = self
+            node.parentKey = key
 
 class VerklePatriciaTree:
     def __init__(self):
@@ -89,16 +95,18 @@ class VerklePatriciaTree:
         if self.root is None:
             self.root = LeafNode(keys,values,fullkeys)
             return
-        if node is LeafNode:
-            prefix = utils.maxPrefix(node.keys,keys)
+        if node is None:
+            node = self.root
+        if isinstance(node,LeafNode):
+            prefix = self.maxPrefix(node.keys,keys)
             if node.keys == keys:     #keys与node.keys完全相同
                 node.update(values)
             elif len(prefix)==0:      #keys与node.keys完全不同
                 bNode = BranchNode()
+                self._modifyParent(node,bNode)
                 bNode[keys[0]]=LeafNode(keys[1:],values,fullkeys)
                 bNode[node.keys[0]]=node
                 node.keys = node.keys[1:]
-                self._modifyParent(node,bNode)
             else:                   #keys与node.keys有相同的前缀
                 bNode = BranchNode()
                 eNode = ExtensionNode(prefix,bNode)
@@ -115,18 +123,18 @@ class VerklePatriciaTree:
                 else:
                     bNode[keys[len(prefix)]] = LeafNode(keys[len(prefix)+1:], values,fullkeys)
                     bNode[node.keys[len(prefix)]] = node
-                    node.key = node.key[len(prefix) + 1:]
-        elif node is ExtensionNode:
+                    node.keys = node.keys[len(prefix) + 1:]
+        elif isinstance(node,ExtensionNode):
             if node.nibbs == keys:
                 if node.value is Node:
                     node.value = LeafNode(keys,values,fullkeys)
                     node.value.parent = node
                 else:
                     node.value.update(values)
-            elif node.nibbs.startsWith(keys):
+            elif node.nibbs.startswith(keys):
                 eNode = ExtensionNode(keys,node,LeafNode(keys,values,fullkeys))
                 node.nibbs = node.nibbs[len(keys):]
-            elif keys.startsWith(node.nibbs):
+            elif keys.startswith(node.nibbs):
                 keys = keys[len(node.nibbs):]
                 self.insert(keys,values,node.next)
             else:
@@ -135,12 +143,20 @@ class VerklePatriciaTree:
                 bNode[keys[0]] = LeafNode(keys[1:],values,fullkeys)
                 bNode[node.nibbs[0]] = node
                 node.nibbs = node.nibbs[1:]
-        elif node is BranchNode:
+        elif isinstance(node,BranchNode):
             if node[keys[0]] is None:
                 node[keys[0]] = LeafNode(keys[1:],values,fullkeys)
             else:
-                keys = keys[1:]
-                self.insert(keys,values,node[keys[0]])
+                self.insert(keys=keys[1:],values=values,node=node[keys[0]],fullkeys=fullkeys)
+
+    def maxPrefix(self,text1, text2):
+        r = []
+        for i in range(min(len(text1), len(text2))):
+            if text1[i] == text2[i]:
+                r.append(text1[i])
+            else:
+                break
+        return "".join(r)
 
     def find(self,keys,node=None):
         '''
@@ -149,14 +165,14 @@ class VerklePatriciaTree:
         if node is None:
             node = self.root
         if node is None: return None
-        if node is LeafNode:
+        if isinstance(node,LeafNode):
             return node if node.keys == keys else None
-        elif node is ExtensionNode:
+        elif isinstance(node,ExtensionNode):
             if node.value is not None and node.value.keys == keys:
                 return node.value
             else:
                 return self.find(keys[len(node.nibbs):],node.next)
-        elif node is BranchNode:
+        elif isinstance(node,BranchNode):
             if node[keys[0]] is None:
                 return None
             return self.find(keys[1:],node[keys[0]])
@@ -170,18 +186,20 @@ class VerklePatriciaTree:
         if nodeOrigin.parent is None:
             self.root = nodeNew
             return
-        if nodeOrigin.parent is BranchNode:
+        if nodeNew is None:return
+
+        if isinstance(nodeOrigin.parent,BranchNode):
+            nodeNew.parentKey = nodeOrigin.parentKey
             nodeOrigin.parent[nodeOrigin.parentKey]=nodeNew
-        elif nodeOrigin.parent is ExtensionNode:
+            nodeNew.parent = nodeOrigin.parent
+        elif isinstance(nodeOrigin.parent, ExtensionNode):
             nodeOrigin.parent.next = nodeNew
             nodeNew.parent = nodeOrigin.parent
-            nodeNew.parentKey = -1
+            nodeNew.parentKey = nodeOrigin.parentKey
 
     def _computeCommitment(self,node=None):
         if node is None:
             node = self.root
-        if node is Node:
-            return
         if isinstance(node,LeafNode):
             nodehash = [dumb25519.hash_to_scalar('verkle', node)]
             node.poly, node.scalar, node.commitment = self._computePoly(nodehash)
@@ -209,7 +227,8 @@ class VerklePatriciaTree:
 
 
 class VerkleRTree(RTree):
-    pass
+    def __init__(self,context,range):
+        super(VerkleRTree,self).__init__(context,range)
 
 from graphviz import Digraph, nohtml
 
@@ -218,10 +237,10 @@ class VPTView:
         self.g = None
         self.create(vpt)
 
-    def show(self):
+    def show(self,filename,directory):
         if self.g is None:
             return
-        self.g.view()
+        self.g.view(filename=filename,directory=directory)
 
 
     def create(self,vpt,node=None,parent=None,id=1):
@@ -235,7 +254,7 @@ class VPTView:
             self.g = Digraph('g', filename='btree.gv',node_attr={'shape': 'record', 'height': '.1'})
         if node is LeafNode:
             gid = str(id)
-            self.g.node(gid,utils.bytes2str(node.keys))
+            self.g.node(gid,node.keys)
             if parent is not None:
                 self.g.edges([(parent,gid)])
         elif node is ExtensionNode:

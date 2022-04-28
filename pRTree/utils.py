@@ -59,9 +59,9 @@ class Configuration:
                 self.dict[key] = value
 
     def __getitem__(self, item):
-        return self.dict.get(item)
+        return self.dict.get(item,None)
     def __getattr__(self, item):
-        return self.dict.get(item)
+        return self.dict.get(item,None)
 
     def _load(self):
         if self.filename is None or self.filename == '':
@@ -79,20 +79,26 @@ class Configuration:
 
 
 class Collections:
+    @classmethod
     def all(cls,func,datas : list):
         if datas is None or len(datas)<=0:
             return True
         for d in datas:
             if not func(d):return False
         return True
+
+    @classmethod
     def any(cls,func,datas:list):
         if datas is None or len(datas) <= 0:return False
         for d in datas:
             if func(d): return True
         return False
+
+    @classmethod
     def map(cls,func,iterable,*params,**kwargs):
         for e in iterable:
             func(e,params,kwargs)
+    @classmethod
     def assign(cls,prop,value,iterable):
         for e in iterable:
             e.__setattr__(prop,value)
