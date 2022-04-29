@@ -28,6 +28,7 @@ class RNode:
         self.parent = parent
         self.children = children
         self.entries = entries
+        self.ref = 0
         if self.mbr is None: self.mbr = geo.EMPTY_RECT
         if len(children)>0:
             Collections.assign('parent',self,self.children)

@@ -57,7 +57,7 @@ def merge_nodes_ref(tree,nodes):
     根据引用计数合并节点
     '''
     if nodes is None or len(nodes)<=0:return nodes
-    nodes = sorted(nodes,lambda n1,n2: n1.ref(tree)-n2.ref(tree),reverse=True)
+    nodes = sorted(nodes,key=lambda n: n.ref,reverse=True)
     if len(nodes)<=tree.context.max_children_num:
         return nodes
     areas,overlops = [],[]
@@ -66,7 +66,7 @@ def merge_nodes_ref(tree,nodes):
         for node in nodes[:i+1]:
             m1 = m1.union(node.mbr)
         m2 = geo.EMPTY_RECT
-        for node in node[i+2:]:
+        for node in nodes[i+2:]:
             m2 = m2.union(node.mbr)
         areas.append(m1.volume()+m2.volume())
         #overlops.append(m1.intersection(m2).volumes())

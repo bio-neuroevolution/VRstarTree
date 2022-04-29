@@ -4,6 +4,7 @@ import geo
 from geo import Rectangle
 from node import Entry, RNode
 from utils import Configuration
+from graphviz import Digraph, nohtml
 
 
 class RTree:
@@ -69,6 +70,15 @@ class RTree:
 
         return self._insert(entry,node.children)
 
+    def find(self,mbr:Rectangle,node:RNode=None):
+        if mbr is None or mbr.empty():
+            return []
+        if self.root is None:return []
+        if node is None:
+            return self.find(mbr,self.root)
+
+
+
 
     def _doSelection(self,entry,nodes):
         if nodes is None or len(nodes)==0:return None
@@ -89,6 +99,44 @@ class RTree:
         if algName is None or algName == '': algName = RTree.SPLIT_DEFAULT
         method = RTree.algs[algName]
         return method(self, node)
+
+
+    def view(self,path,filename):
+        g = Digraph('g', filename='rtree.gv', node_attr={'shape': 'record', 'height': '.1'})
+        self._create_viewnode(g,self.root)
+        g.view(filename=filename, directory=path)
+
+    def _create_viewnode(self,g,node,parentId=None,id=1):
+        if node is None: return
+        if len(node.children)>0:
+            content = ''
+            for i in range(len(node.children)):
+                if node.children[i] is None:
+                    continue
+                content = content + '<f' + str(i) + '>' + chr(i) + '|'
+            content = content[:-1]
+            gid = str(id)
+            gn = self.g.node(id, nohtml(content))
+            if parentId is not None:
+                self.g.edges([(parentId, gid)])
+
+            for n in node.children:
+                id += 1
+                self._create_viewnode(g,n,gid,id)
+        else:
+            content = ''
+            for i in range(len(node.entries)):
+                content = content + '<f' + str(i) + '>' + chr(i) + '|'
+            content = content[:-1]
+            gid = str(id)
+            gn = self.g.node(id, nohtml(content))
+            if parentId is not None:
+                self.g.edges([(parentId, gid)])
+
+
+
+
+
 
 
 

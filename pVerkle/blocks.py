@@ -2,12 +2,14 @@
 import hashlib
 import json
 import math
+import numpy as np
 import os
 from random import randint
+import  time
 
 from node import RNode, Entry
 from rtree import RTree
-from utils import Configuration
+from utils import Configuration, Collections
 from verkle import VerklePatriciaTree, VerkleRTree, VPTView
 import geo
 
@@ -29,7 +31,7 @@ class BTransaction(Entry):
         self.datas = datas
         self.mbr = geo.Rectangle(dimension=3,values=[self.log,self.log,self.lat,self.lat,self.ts,self.ts])
 
-class BRecord(BTransaction):
+class BRecord:
     def __init__(self,account,log,lat,ts,account_dis):
         """
         轨迹信息
@@ -45,6 +47,13 @@ class BRecord(BTransaction):
         self.lat = lat
         self.ts = ts
         self.account_dis = account_dis
+        self.mbr = geo.Rectangle(dimension=3, values=[self.log, self.log, self.lat, self.lat, self.ts, self.ts,self.account_dis,self.account_dis])
+    def equals(self,r):
+        if self.account != r.account:return False
+        if self.log != r.log:return False
+        if self.lat != r.lat:return False
+        if self.ts != r.ts:return False
+        return True
 
 class BAccount:
     def __init__(self,id,ts,log,lat):
@@ -108,7 +117,16 @@ class Block:
         mbr = geo.Rectangle.unions([tx.mbr for tx in transactions])
         tree = VerkleRTree(self.context,mbr)
         for tr in transactions:
-            tree.insert(BRecord(tr.account,tr.log,tr.lat,tr.ts))
+            tree.insert(BRecord(tr.account,tr.log,tr.lat,tr.ts,self.account_distance(tr.account)))
+
+    def account_distance(self,s1):
+        s2 = "".join(['a']*self.context.account_length)
+        b1, b2 = bytearray(s1, encoding='utf-8'), bytearray(s2, encoding='utf-8')
+        diff = 0
+        for i in range(len(b1)):
+            if b1[i] != b2[i]:
+                diff += bin(b1[i] ^ b2[i]).count("1")
+        return diff
 
     def _create_accounts(self,transactions):
         accounts = {}
@@ -119,6 +137,17 @@ class Block:
                 accounts[tx.account] = BAccount(tx.account,tx.ts,tx.log,tx.lat)
         return list(accounts.values())
 
+    def query_account(self, account)->BAccount:
+        return self.statetrieRoot.find(account)
+    def query_tran(self,mbr)->list:
+        return self.trantrieRoot.find(mbr)
+    def query_traj(self,account:str,mbr:geo.Rectangle)->list:
+        range = geo.Rectangle(mbr.dimension + 1)
+        for i in mbr.dimension:
+            range.update(i,mbr.lower(i),mbr.update(i))
+        account_dis = self.account_distance(account)
+        range.update(len(range.dimension)-1,account_dis,account_dis)
+        return self.trajetrieRoot.find(range)
 
 
 
@@ -143,6 +172,8 @@ class BlockChain:
         block_string = json.dumps(block, sort_keys=True).encode()
         return hashlib.sha256(block_string).hexdigest()
 
+
+
     def _create_blocks(self,transactions):
         if transactions is None or len(transactions)<=0:return
 
@@ -150,7 +181,7 @@ class BlockChain:
 
         parent_hash = None
         for i in range(block_num):
-            tx = transactions[i*self.blocksize: (i+1)*self.blocksize+1 if (i+1)*self.blocksize<len(transactions) else -1]
+            tx = transactions[i*self.blocksize: (i+1)*self.blocksize]
             block = Block(self.context,parent_hash,tx,proof = randint(1, 1000))
             hash = BlockChain.hash(block)
             self.blocks[hash] = block
@@ -175,6 +206,51 @@ class BlockChain:
         for i,b in self.blocks.items():
             b.summary('block'+str(i),os.path.abspath('.'))
 
+    def query_account(self,account):
+        t,r = None,None
+        for i, b in self.blocks.items():
+            acc = b.query_accont(account)
+            if t is None or acc.tm > t:
+                t = acc.tm
+                r = acc
+        return r
+    def query_tran(self,mbr):
+        r = []
+        for i, b in self.blocks.items():
+            txs = b.query_tran(mbr)
+            r = r +txs
+        return r
+    def query_traj(self,account,mbr):
+        r = []
+        for i, b in self.blocks.items():
+            trajs = b.query_traj(account,mbr)
+            r = r + trajs
+        rm = []
+        for i,t in enumerate(r):
+            if Collections.any(lambda x:t.equals(x),rm):
+                continue
+            rm.append(t)
+        return rm
+
+    def create_query(self,count=1,sizes:list=[2,2,2],posrandom=100,lengthcenter=0.05,lengthscale=0.25):
+        ds = [np.arange(0, size, 1) for size in sizes]
+        query_centers = np.meshgrid(ds)
+        covs = np.ones(len(sizes),len(sizes))*lengthscale
+
+        r = []
+        for c in range(count):
+            center = np.random.choice(query_centers,1)
+            for i in range(len(center)):
+                center[i] += (np.random.random() * 2 - 1) / posrandom
+            length = np.random.randn(lengthcenter,lengthscale)
+            mbr = geo.Rectangle(dimension=len(sizes))
+            for j in range(len(sizes)):
+                mbr.update(j,center[j]-length/2,center[j]+length/2)
+            r.append(mbr)
+        return r
+    def optima(self):
+        pass
+
 
 
 if __name__ == '__main__':
@@ -190,4 +266,35 @@ if __name__ == '__main__':
 
     # 打印区块
     chain.summary()
+
+    # 查询账户信息
+    acc = chain.query_account('fbtrcvpn')
+    print(str(acc))
+
+    # 查询交易信息
+    mbr = geo.Rectangle(0.15,0.45,0.2,0.65,0.3,0.85,0.1,0.8)
+    trx = chain.query_tran(mbr)
+    print(str(trx))
+
+    # 查询轨迹信息
+    trajs = chain.query_traj('fbtrcvpn',mbr)
+    print(str(trajs))
+
+    # 创建交易查询分布
+    mbrs = chain.create_query(count=100)
+    begin = time.time()
+    for mbr in mbrs:
+        chain.query_tran(mbr)
+    print("交易查询消耗（优化前）:"+str(time.time()-begin))
+
+    # 根据查询优化
+    chain.optima()
+
+    # 第二次交易查询
+    begin = time.time()
+    for mbr in mbrs:
+        chain.query_tran(mbr)
+    print("交易查询消耗（优化后）:" + str(time.time() - begin))
+
+
 
