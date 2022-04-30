@@ -7,8 +7,7 @@ class Geometry:
         self.dimension = dimension
         self.values = values
         if self.values is None:self.values = []
-    def clone(self):
-        return copy.deepcopy(self)
+
     def empty(self):
         return self.values is None or len(self.values)<=0
 
@@ -38,7 +37,11 @@ EMPTY = Geometry()
 
 class Rectangle(Geometry):
     def __init__(self,dimension=2,values=None):
-        super(Rectangle,self).__init__(dimension,values)
+        self.dimension = dimension
+        self.values = values
+        if self.values is None: self.values = []
+    def clone(self):
+        return Rectangle(self.dimension,copy.copy(self.values))
     def update(self,dimension,lower,upper):
         if len(self.values)<2*(dimension+1):
             self.values = self.values + [0]*((dimension+1)*2-len(self.values))
@@ -74,9 +77,7 @@ class Rectangle(Geometry):
             return 0 if abs(b[0]-pos)>=abs(b[1]-pos) else 1
 
     def union(self,g):
-        if g is None:
-            return self.clone()
-        elif g.empty():
+        if g is None or g.empty():
             return self.clone()
         elif self.empty():
             return g.clone()

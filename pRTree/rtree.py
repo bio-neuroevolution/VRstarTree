@@ -65,6 +65,8 @@ class RTree:
             node.addEntries(entry)
             if len(node.entries)>self.context.max_entries_num:
                 cnodes = self._doSplit(node)
+                if len(cnodes)> self.context.max_children_num:
+                    cnodes = self._doMerge(cnodes)
                 return cnodes[0]
             return node
 
@@ -77,6 +79,21 @@ class RTree:
         if node is None:
             return self.find(mbr,self.root)
 
+        cross = node.mbr.overlop(mbr)
+        if cross.empty():return None
+
+        if node.isLeaf():
+            node.ref += 1
+            return [entry for entry in node.entries if entry.mbr.isOverlop(mbr)]
+
+        rs = []
+        for cnode in node.children:
+            corss = node.mbr.overlop(mbr)
+            if corss.empty():continue
+            cnode.ref += 1
+            rs = rs + self.find(mbr,cnode)
+
+        return rs
 
 
 

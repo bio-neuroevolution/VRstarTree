@@ -14,6 +14,9 @@ def select_nodes_rstar(tree,entry,nodes):
     :param nodes list of RNode 待选择的节点列表
     """
     if nodes is None or len(nodes) <=0:return None
+    if len(nodes) == 1:
+        return nodes[0] if nodes[0].mbr.isOverlop() else None
+
     # 如果是叶节点
     if nodes[0].isLeaf():
         # 尝试将数据加入到每个节点，计算加入后与其它节点的重叠面积和增长面积
@@ -57,16 +60,19 @@ def merge_nodes_ref(tree,nodes):
     根据引用计数合并节点
     '''
     if nodes is None or len(nodes)<=0:return nodes
-    nodes = sorted(nodes,key=lambda n: n.ref,reverse=True)
+    ## 还不需要合并
     if len(nodes)<=tree.context.max_children_num:
         return nodes
+    ## 按照引用次数从大到小排序
+    nodes = sorted(nodes,key=lambda n: n.ref,reverse=True)
+
     areas,overlops = [],[]
     for i in range(len(nodes)-1):
         m1 = geo.EMPTY_RECT
         for node in nodes[:i+1]:
             m1 = m1.union(node.mbr)
         m2 = geo.EMPTY_RECT
-        for node in nodes[i+2:]:
+        for node in nodes[i+1:]:
             m2 = m2.union(node.mbr)
         areas.append(m1.volume()+m2.volume())
         #overlops.append(m1.intersection(m2).volumes())
@@ -75,7 +81,7 @@ def merge_nodes_ref(tree,nodes):
     parent = nodes[0].parent
     parent.children = []
     p1 = RNode(parent=nodes[0].parent,children=nodes[:i+1],entries=[])
-    p2 = RNode(parent=nodes[0].parent,children=nodes[i+2:],entries=[])
+    p2 = RNode(parent=nodes[0].parent,children=nodes[i+1:],entries=[])
     return parent.children
 
 def split_node_rstar(tree,node):
@@ -91,7 +97,8 @@ def split_node_rstar(tree,node):
         for d in range(entry.mbr.dimension):
             bound = entry.mbr.boundary(d)
             for i in range(2):
-                g1 = [e for e in node.entries if e.mbr.rela_corss(d,bound[i])==0]
+                g1 = [e for e in node.entries if e.mbr.rela_corss(d,bound[i])==0 and e != d]
+                if i == 1: g1.append(entry)
                 g2 = list(set(node.entries) - set(g1))
                 if len(g1)<=0 or len(g2)<=0:
                     continue
@@ -119,6 +126,64 @@ def split_node_rstar(tree,node):
         n1 = RNode(parent=parent,children=[],entries=g1)
         n2 = RNode(parent=parent,children=[],entries=g2)
         return parent.children
+
+def split_node_ref(tree,node):
+    '''
+    基于引用计数的分裂算法
+    :param tree RTree
+    :param node RNode 一定是叶节点
+    '''
+    if len(node.entries)<=0:return [node]
+
+    #引用计数降序
+    refs = np.array([entry.ref for entry in node.entries])
+    refindex = np.argsort(-np.array(refs))
+
+    totoal_average = np.average(refs)
+    maxcov,plans = 0,[]
+    for i in range(len(refindex)-1):
+        r1 = [refs[index] for index in refindex[:i+1]]
+        r2 = [refs[index] for index in refindex[i+1:]]
+        g1 = [node.entries[index] for index in refindex[:i+1]]
+        g2 = [node.entries[index] for index in refindex[i+1:]]
+        g1_avg = np.average(r1)
+        g2_avg = np.average(r2)
+
+
+        cov = (((g1_avg-totoal_average)**2)*len(r1) + ((g2_avg-totoal_average)**2)*len(r2))/len(refs)
+        if len(plans)<=0 or abs(maxcov-cov)<=0:
+            maxcov = cov
+            plans.append((i,g1,g2,cov))
+
+    optima,minarea = None,0
+    if len(plans)==1:
+        optima = plans[0]
+    else:
+        for plan in plans:
+            i,g1,g2,cov = plan
+            mbr1 = geo.Rectangle.unions([g.mbr for g in g1])
+            mbr2 = geo.Rectangle.unions([g.mbr for g in g2])
+            area = mbr1.volume() + mbr2.volume()
+            #overlop = mbr1.overlop(mbr2).volume()
+            if optima is None or minarea > area:
+                optima,minarea = plan,area
+
+    if node.parent is None:
+        tree.root = RNode()
+        tree.children = [RNode(parent=tree.root,children=[],entries=g1),RNode(parent=tree.root,children=[],entries=g2)]
+        return tree.root.children
+    else:
+        node.parent.children = list(set(node.parent.children) - set([node]))
+        parent,node.parent = node.parent,None
+        n1 = RNode(parent=parent,children=[],entries=g1)
+        n2 = RNode(parent=parent,children=[],entries=g2)
+        return parent.children
+
+
+
+
+
+
 
 
 

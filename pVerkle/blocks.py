@@ -47,7 +47,7 @@ class BRecord:
         self.lat = lat
         self.ts = ts
         self.account_dis = account_dis
-        self.mbr = geo.Rectangle(dimension=3, values=[self.log, self.log, self.lat, self.lat, self.ts, self.ts,self.account_dis,self.account_dis])
+        self.mbr = geo.Rectangle(dimension=4, values=[self.log, self.log, self.lat, self.lat, self.ts, self.ts,self.account_dis,self.account_dis])
     def equals(self,r):
         if self.account != r.account:return False
         if self.log != r.log:return False
@@ -68,7 +68,7 @@ class BAccount:
         self.log = log
         self.lat = lat
         self.ts = ts
-
+        self.mbr = geo.Rectangle(dimension=3, values=[self.log, self.log, self.lat, self.lat, self.ts, self.ts])
 
 class Block:
     def __init__(self,context,parent_hash,transactions,proof):
@@ -114,7 +114,7 @@ class Block:
         return tree
 
     def _create_traj_trie(self,transactions):
-        mbr = geo.Rectangle.unions([tx.mbr for tx in transactions])
+        mbr = geo.Rectangle(4,[0.,1.,0.,1.,0.,1.,0.,1.])
         tree = VerkleRTree(self.context,mbr)
         for tr in transactions:
             tree.insert(BRecord(tr.account,tr.log,tr.lat,tr.ts,self.account_distance(tr.account)))
@@ -126,7 +126,7 @@ class Block:
         for i in range(len(b1)):
             if b1[i] != b2[i]:
                 diff += bin(b1[i] ^ b2[i]).count("1")
-        return diff
+        return diff/64
 
     def _create_accounts(self,transactions):
         accounts = {}

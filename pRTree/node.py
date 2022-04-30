@@ -12,7 +12,7 @@ class Entry:
         datas any         数据信息
         """
         self.id = id
-        self.mbr = mbr
+        self.mbr = mbr.clone()
         self.datas = datas
 
 class RNode:
@@ -24,7 +24,7 @@ class RNode:
         children list of RNode 所有子节点
         entries list of Entry 所有数据对象，只有叶节点才有
         '''
-        self.mbr = mbr
+        self.mbr = mbr.clone() if mbr is not None else None
         self.parent = parent
         self.children = children
         self.entries = entries
