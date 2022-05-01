@@ -261,6 +261,14 @@ class BlockChain:
         return rm
 
     def create_query(self,count=1,sizes:list=[2,2,2],posrandom=100,lengthcenter=0.05,lengthscale=0.025):
+        """
+        创建满足一定分布的查询
+        :param count  int 生成的查询数
+        :param sizes  list 生成的查询的每个维的中心点个数
+        :param posrandom int 中心点漂移的百分比
+        :param lengthcenter float 查询窗口的宽度均值
+        :param lengthscale float 查询窗口的宽度方差
+        """
         ds = []
         for i in range(len(sizes)):
             interval = 1./(sizes[i]+1)
