@@ -13,7 +13,7 @@ class RTree:
     MERGE_DEFAULT = "merge_nodes"          #缺省合并节点方法名
     SPLIT_DEFAULT = 'split_node'           #缺省分裂节点方法名
     # 算法Map
-    algs = {'select_rstar': alg.select_nodes_rstar,'merge_nodes':alg.merge_nodes_ref,'split_node':alg.split_node_rstar}
+    algs = {'select_rstar': alg.select_nodes_rstar,'merge_nodes':alg.merge_nodes_rstar,'split_node':alg.split_node_rstar}
 
     @classmethod
     def registe(cls,name,func):
@@ -30,6 +30,9 @@ class RTree:
         self.root = None
         if self.range is None:
             self.range = geo.EMPTY_RECT
+
+    def serialize(self):
+        return {'range':str(self.range),'root':RNode.serialize(self.root)}
 
     def insert(self,entry:Entry):
         '''
@@ -80,11 +83,13 @@ class RTree:
             return self.find(mbr,self.root)
 
         cross = node.mbr.overlop(mbr)
-        if cross.empty():return None
+        if cross.empty():return []
 
         if node.isLeaf():
             node.ref += 1
-            return [entry for entry in node.entries if entry.mbr.isOverlop(mbr)]
+            rs = [entry for entry in node.entries if entry.mbr.isOverlop(mbr)]
+            for r in rs: r.ref += 1
+            return rs
 
         rs = []
         for cnode in node.children:
@@ -116,6 +121,33 @@ class RTree:
         if algName is None or algName == '': algName = RTree.SPLIT_DEFAULT
         method = RTree.algs[algName]
         return method(self, node)
+
+    def all_entries(self,node=None):
+        if node is None:
+            return self.all_entries(self.root)
+
+        if len(node.entries)>0:
+            return node.entries
+        if len(node.children)<=0: return []
+
+        r = []
+        for cnode in node.children:
+            r = r + self.all_entries(cnode)
+        return  r
+
+    def rearrage_all(self):
+        entries = self.all_entries()
+        oldalgs = RTree.algs.copy()
+        RTree.algs['merge_nodes'] = alg.merge_nodes_ref
+        RTree.algs['split_node'] = alg.split_node_ref
+
+        self.root = None
+        for entry in entries:
+            self.insert(entry)
+
+        RTree.algs = oldalgs
+
+
 
 
     def view(self,path,filename):

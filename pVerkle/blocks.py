@@ -30,6 +30,10 @@ class BTransaction(Entry):
         self.ts = ts
         self.datas = datas
         self.mbr = geo.Rectangle(dimension=3,values=[self.log,self.log,self.lat,self.lat,self.ts,self.ts])
+        self.ref = 0
+
+    def __str__(self):
+        return self.id+ ',' + str(self.datas) +','+str(self.mbr)+","+str(self.ref)
 
 class BRecord:
     def __init__(self,account,log,lat,ts,account_dis):
@@ -47,7 +51,11 @@ class BRecord:
         self.lat = lat
         self.ts = ts
         self.account_dis = account_dis
+        self.ref = 0
         self.mbr = geo.Rectangle(dimension=4, values=[self.log, self.log, self.lat, self.lat, self.ts, self.ts,self.account_dis,self.account_dis])
+    def __str__(self):
+        return self.id+ ',' +str(self.mbr)+","+str(self.ref)
+
     def equals(self,r):
         if self.account != r.account:return False
         if self.log != r.log:return False
@@ -69,6 +77,9 @@ class BAccount:
         self.lat = lat
         self.ts = ts
         self.mbr = geo.Rectangle(dimension=3, values=[self.log, self.log, self.lat, self.lat, self.ts, self.ts])
+        self.ref = 0
+    def __str__(self):
+        return self.id+ ',' +str(self.mbr)
 
 class Block:
     def __init__(self,context,parent_hash,transactions,proof):
@@ -88,14 +99,20 @@ class Block:
         self.statetrieRoot = self._create_vpt(transactions)
         self.trantrieRoot = self._create_tran_trie(transactions)
         self.trajetrieRoot = self._create_traj_trie(transactions)
+    def serialize(self):
+        rs = {'context': self.context}
+        rs.update({'nonce':self.nonce,'parent_hash': str(self.parent_hash),'next_hash':str(self.next_hash)})
+        rs.update({'start_time':str(self.start_time),'end_time':str(self.end_time),'timestamp':str(self.timestamp)})
+        rs.update({'statetrieRoot':self.statetrieRoot.serialize()})
+        rs.update({'trantrieRoot': self.trantrieRoot.serialize()})
+        rs.update({'trajetrieRoot': self.trajetrieRoot.serialize()})
+        return rs
 
     def summary(self,filename,path):
-        print('begin:'+str(self.start_time)+'\n')
-        print('end:'+str(self.end_time)+'\n')
+        print('begin:'+str(self.start_time))
+        print('end:'+str(self.end_time))
         vptView = VPTView(self.statetrieRoot)
         vptView.show(filename,path)
-
-
 
     def _create_vpt(self,transactions):
         accounts = self._create_accounts(transactions)
@@ -118,6 +135,7 @@ class Block:
         tree = VerkleRTree(self.context,mbr)
         for tr in transactions:
             tree.insert(BRecord(tr.account,tr.log,tr.lat,tr.ts,self.account_distance(tr.account)))
+        return tree
 
     def account_distance(self,s1):
         s2 = "".join(['a']*self.context.account_length)
@@ -138,18 +156,29 @@ class Block:
         return list(accounts.values())
 
     def query_account(self, account)->BAccount:
-        return self.statetrieRoot.find(account)
+        node = self.statetrieRoot.find(account)
+        return None if node is None else node.values
+
     def query_tran(self,mbr)->list:
         return self.trantrieRoot.find(mbr)
     def query_traj(self,account:str,mbr:geo.Rectangle)->list:
-        range = geo.Rectangle(mbr.dimension + 1)
-        for i in mbr.dimension:
-            range.update(i,mbr.lower(i),mbr.update(i))
+        #r = geo.Rectangle(mbr.dimension + 1)
+        #for i in range(mbr.dimension):
+        #    r.update(i,mbr.lower(i),mbr.upper(i))
+        #r.update(r.dimension-1,account_dis,account_dis)
         account_dis = self.account_distance(account)
-        range.update(len(range.dimension)-1,account_dis,account_dis)
-        return self.trajetrieRoot.find(range)
+        mbr.update(3,account_dis,account_dis)
+        return self.trajetrieRoot.find(mbr)
 
 
+class BlockEnocder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Block):
+            return obj.serialize()
+        elif isinstance(obj,Configuration):
+            return obj.serialize()
+
+        return json.JSONEncoder.default(self, obj)
 
 
 class BlockChain:
@@ -169,10 +198,8 @@ class BlockChain:
         :return: <str>
         """
         # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
-        block_string = json.dumps(block, sort_keys=True).encode()
+        block_string = json.dumps(block, cls=BlockEnocder, sort_keys=True).encode()
         return hashlib.sha256(block_string).hexdigest()
-
-
 
     def _create_blocks(self,transactions):
         if transactions is None or len(transactions)<=0:return
@@ -200,18 +227,19 @@ class BlockChain:
 
 
     def summary(self):
-        print("context:"+str(self.context)+"\n")
-        print("blocksize:"+str(self.blocksize)+"\n")
-        print("block count:"+self.getBlockCount())
+        print("context:"+str(self.context.serialize()))
+        print("blocksize:"+str(self.blocksize))
+        print("block count:"+str(self.getBlockCount()))
         for i,b in self.blocks.items():
+            print(str(b.serialize()))
             b.summary('block'+str(i),os.path.abspath('.'))
 
     def query_account(self,account):
         t,r = None,None
         for i, b in self.blocks.items():
-            acc = b.query_accont(account)
-            if t is None or acc.tm > t:
-                t = acc.tm
+            acc = b.query_account(account)
+            if t is None or acc.ts > t:
+                t = acc.ts
                 r = acc
         return r
     def query_tran(self,mbr):
@@ -232,31 +260,35 @@ class BlockChain:
             rm.append(t)
         return rm
 
-    def create_query(self,count=1,sizes:list=[2,2,2],posrandom=100,lengthcenter=0.05,lengthscale=0.25):
-        ds = [np.arange(0, size, 1) for size in sizes]
-        query_centers = np.meshgrid(ds)
-        covs = np.ones(len(sizes),len(sizes))*lengthscale
+    def create_query(self,count=1,sizes:list=[2,2,2],posrandom=100,lengthcenter=0.05,lengthscale=0.025):
+        ds = []
+        for i in range(len(sizes)):
+            interval = 1./(sizes[i]+1)
+            d = [(j+1)*interval for j in range(sizes[i])]
+            ds.append(d)
+
 
         r = []
         for c in range(count):
-            center = np.random.choice(query_centers,1)
+            center = [np.random.choice(d,1)[0] for i,d in enumerate(ds)]
             for i in range(len(center)):
                 center[i] += (np.random.random() * 2 - 1) / posrandom
-            length = np.random.randn(lengthcenter,lengthscale)
+            length = np.random.normal(loc=lengthcenter,scale=lengthscale,size=1)
             mbr = geo.Rectangle(dimension=len(sizes))
             for j in range(len(sizes)):
                 mbr.update(j,center[j]-length/2,center[j]+length/2)
             r.append(mbr)
         return r
     def optima(self):
-        pass
+        for i, b in self.blocks.items():
+            b.trantrieRoot.rearrage_all()
 
 
 
 if __name__ == '__main__':
     # 配置
     context = Configuration(max_children_num=4, max_entries_num=2,account_length=8, account_count=200,select_nodes_func='',merge_nodes_func='',split_node_func='')
-    # 创建交易信息
+    # 创建交易信息[0.15,0.45,0.2,0.65,0.3,0.85,0.1,0.8]
     txs = [BTransaction('abcdefgh',0.25,0.75,0.1,'d1'),BTransaction('abhgtcvb',0.15,0.35,0.2,'d2'),
            BTransaction('fbtrcvpn',0.4, 0.5, 0.3,'d3'),BTransaction('ftbnprqw',0.90,0.90,0.4,'d4'),
            BTransaction('uvpocirt',0.6, 0.1, 0.5,'d5'),BTransaction('fbtrcvpn',0.36,0.69,0.6,'d6'),
@@ -268,17 +300,21 @@ if __name__ == '__main__':
     chain.summary()
 
     # 查询账户信息
+    print('查询账户（fbtrcvpn）：')
     acc = chain.query_account('fbtrcvpn')
-    print(str(acc))
+    print('查询账户结果：'+ str(acc))
 
     # 查询交易信息
-    mbr = geo.Rectangle(0.15,0.45,0.2,0.65,0.3,0.85,0.1,0.8)
+    mbr = geo.Rectangle(dimension=4,values=[0.15,0.45,0.2,0.65,0.3,0.85,0.1,0.8])
+    print('查询交易：' + str(mbr))
     trx = chain.query_tran(mbr)
-    print(str(trx))
+    print('查询交易结果：'+str([str(tx) for tx in trx]))
 
     # 查询轨迹信息
+    mbr = geo.Rectangle(dimension=4, values=[0., 1., 0., 1., 0., 1., 0., 1.])
     trajs = chain.query_traj('fbtrcvpn',mbr)
-    print(str(trajs))
+    print('查询轨迹：fbtrcvpn' + str(mbr))
+    print('查询轨迹信息：'+ str([str(tr) for tr in trajs]))
 
     # 创建交易查询分布
     mbrs = chain.create_query(count=100)

@@ -21,6 +21,9 @@ class Node:
         self.poly = 0
         self.scalar = 0
 
+    def serialize(self):
+        return {'parentKey':self.parentKey,'commitment':self.commitment,'poly':self.poly,'scalar':self.scalar}
+
 class LeafNode(Node):
     def __init__(self,keys,values,fullkeys):
         """
@@ -36,9 +39,17 @@ class LeafNode(Node):
     def update(self,values):
         self.values = values
 
+    def serialize(self):
+        rs = super().serialize()
+        rs.update({'keys':self.keys,'values':str(self.values),'fullkeys':self.fullkeys})
+        return rs
+
 class InternalNode(Node):
     def __init__(self):
         super(InternalNode, self).__init__()
+
+    def serialize(self):
+        return super().serialize()
 
 class ExtensionNode(InternalNode):
     def __init__(self, nibbs,next=None,value=None):
@@ -54,6 +65,12 @@ class ExtensionNode(InternalNode):
         self.value = value
         if self.value is not None:
             self.value.parent = self
+
+        def serialize(self):
+            rs = super().serialize()
+            rs.update({'nibbs':self.nibbs,'value':self.value.serialize()})
+            return rs
+
 class BranchNode(InternalNode):
     ENTRY_NUM = 256
     def __init__(self):
@@ -62,6 +79,15 @@ class BranchNode(InternalNode):
         '''
         super(BranchNode, self).__init__()
         self.entries = [-1]*BranchNode.ENTRY_NUM
+
+    def serialize(self):
+        rs = super().serialize()
+        for i,entry in enumerate(self.entries):
+            if entry == -1 or entry is None:
+                continue
+            rs.update({str(i):entry.serialize()})
+        return rs
+
     def __getitem__(self, key):
         '''
         访问入口
@@ -83,6 +109,9 @@ class VerklePatriciaTree:
         self.root = None
         self.vecnum = 255
         self.G = dumb25519.PointVector([dumb25519.random_point() for i in range(self.vecnum)])
+
+    def serialize(self):
+        return dict(vecnum=self.vecnum,G=str(self.G),root=self.root.serialize())
 
     def insert(self,keys,values,node=None,fullkeys = None):
         '''

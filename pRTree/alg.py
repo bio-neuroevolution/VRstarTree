@@ -4,6 +4,7 @@ import geo
 import sys
 
 from node import RNode
+from utils import Collections
 
 
 def select_nodes_rstar(tree,entry,nodes):
@@ -15,7 +16,7 @@ def select_nodes_rstar(tree,entry,nodes):
     """
     if nodes is None or len(nodes) <=0:return None
     if len(nodes) == 1:
-        return nodes[0] if nodes[0].mbr.isOverlop() else None
+        return nodes[0] if nodes[0].mbr.isOverlop(entry.mbr) else None
 
     # 如果是叶节点
     if nodes[0].isLeaf():
@@ -82,7 +83,39 @@ def merge_nodes_ref(tree,nodes):
     parent.children = []
     p1 = RNode(parent=nodes[0].parent,children=nodes[:i+1],entries=[])
     p2 = RNode(parent=nodes[0].parent,children=nodes[i+1:],entries=[])
+    parent._update_mbr()
     return parent.children
+
+def merge_nodes_rstar(tree,nodes):
+    '''
+    根据引用计数合并节点
+    '''
+    if nodes is None or len(nodes)<=0:return nodes
+    ## 还不需要合并
+    if len(nodes)<=tree.context.max_children_num:
+        return nodes
+
+    plan,minarea = None,0
+    for n in range(len(nodes)-1):
+        groups = Collections.combinations(nodes,n+1)
+        for group in groups:
+            g1 = group
+            g2 = list(set(nodes)-set(g1))
+
+            m1 = geo.Rectangle.unions([g.mbr for g in g1])
+            m2 = geo.Rectangle.unions([g.mbr for g in g2])
+            area = m1.volume()+m2.volume()
+            if plan is None or minarea > area:
+                plans = (g1,g2,m1,m2,minarea)
+                minarea = area
+
+    parent = nodes[0].parent
+    parent.children = []
+    p1 = RNode(parent=nodes[0].parent,children=g1,entries=[])
+    p2 = RNode(parent=nodes[0].parent,children=g2,entries=[])
+    parent._update_mbr()
+    return parent.children
+
 
 def split_node_rstar(tree,node):
     '''
@@ -118,13 +151,15 @@ def split_node_rstar(tree,node):
     entry,dimension,bound,area,overlop,g1,g2 = optima
     if node.parent is None:
         tree.root = RNode()
-        tree.children = [RNode(parent=tree.root,children=[],entries=g1),RNode(parent=tree.root,children=[],entries=g2)]
+        tree.root.children = [RNode(parent=tree.root,children=[],entries=g1),RNode(parent=tree.root,children=[],entries=g2)]
+        tree.root._update_mbr()
         return tree.root.children
     else:
         node.parent.children = list(set(node.parent.children) - set([node]))
         parent,node.parent = node.parent,None
         n1 = RNode(parent=parent,children=[],entries=g1)
         n2 = RNode(parent=parent,children=[],entries=g2)
+        parent._update_mbr()
         return parent.children
 
 def split_node_ref(tree,node):
@@ -178,6 +213,9 @@ def split_node_ref(tree,node):
         n1 = RNode(parent=parent,children=[],entries=g1)
         n2 = RNode(parent=parent,children=[],entries=g2)
         return parent.children
+
+
+
 
 
 

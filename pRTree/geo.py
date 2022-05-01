@@ -124,7 +124,7 @@ class Rectangle(Geometry):
             re.update(i,lower,upper)
         return re
     def isOverlop(self,r):
-        return self.overlop(r) is not None
+        return not self.overlop(r).empty()
 
 EMPTY_RECT = Rectangle()
 

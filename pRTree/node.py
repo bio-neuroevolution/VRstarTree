@@ -14,6 +14,9 @@ class Entry:
         self.id = id
         self.mbr = mbr.clone()
         self.datas = datas
+        self.ref = 1
+    def __str__(self):
+        return self.id + ";" + str(self.datas) + ";[" + str(self.mbr) + "]"
 
 class RNode:
     def __init__(self,mbr=None,parent=None,children=[],entries=[]):
@@ -24,12 +27,12 @@ class RNode:
         children list of RNode 所有子节点
         entries list of Entry 所有数据对象，只有叶节点才有
         '''
-        self.mbr = mbr.clone() if mbr is not None else None
+        self.mbr = mbr.clone() if mbr is not None else geo.EMPTY_RECT
         self.parent = parent
         self.children = children
         self.entries = entries
         self.ref = 0
-        if self.mbr is None: self.mbr = geo.EMPTY_RECT
+
         if len(children)>0:
             Collections.assign('parent',self,self.children)
             self.mbr = self.mbr.unions([node.mbr for node in self.children])
@@ -39,6 +42,15 @@ class RNode:
             self.parent.children.append(self)
     def __str__(self):
         return str(self.mbr)
+
+    @classmethod
+    def serialize(cls, node):
+        res = {'mbr':str(node.mbr),'ref':node.ref,'entries':str(node.entries)}
+        children = []
+        for c in node.children:
+            children.append(RNode.serialize(c))
+
+
     def addEntries(self,*entries):
         """
         添加数据
