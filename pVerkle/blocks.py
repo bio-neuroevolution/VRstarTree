@@ -260,7 +260,8 @@ class BlockChain:
             rm.append(t)
         return rm
 
-    def create_query(self,count=1,sizes:list=[2,2,2],posrandom=100,lengthcenter=0.05,lengthscale=0.025):
+    @classmethod
+    def create_query(cls,count=1,sizes:list=[2,2,2],posrandom=100,lengthcenter=0.05,lengthscale=0.025):
         """
         创建满足一定分布的查询
         :param count  int 生成的查询数
@@ -295,7 +296,7 @@ class BlockChain:
 
 if __name__ == '__main__':
     # 配置
-    context = Configuration(max_children_num=4, max_entries_num=2,account_length=8, account_count=200,select_nodes_func='',merge_nodes_func='',split_node_func='')
+    context = Configuration(max_children_num=6, max_entries_num=3,account_length=8, account_count=200,select_nodes_func='',merge_nodes_func='',split_node_func='')
     # 创建交易信息[0.15,0.45,0.2,0.65,0.3,0.85,0.1,0.8]
     txs = [BTransaction('abcdefgh',0.25,0.75,0.1,'d1'),BTransaction('abhgtcvb',0.15,0.35,0.2,'d2'),
            BTransaction('fbtrcvpn',0.4, 0.5, 0.3,'d3'),BTransaction('ftbnprqw',0.90,0.90,0.4,'d4'),

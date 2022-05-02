@@ -21,7 +21,7 @@ class PocemonLoader:
         hk_poke_df = hk_poke_df.sort_values(by=['ts'])[['type', 'lat', 'lon', 'ts']]
         shp = hk_poke_df.shape
         hk_poke_df.dropna(axis=0, how='any', inplace=True)
-        print(shp, '-(dropna)>', hk_poke_df.shape)
+        print('数据量:', hk_poke_df.shape)
         hk_poke_df['type'] = hk_poke_df['type'].apply(lambda x: str(int(x))).astype(int)
         hk_poke_df['ts'] = hk_poke_df['ts'].astype(int)
         return hk_poke_df.reset_index(drop=True)
@@ -34,7 +34,7 @@ class PocemonLoader:
         new_times = new_times[:a.shape[0]]
         new_times = new_times.astype(int)
         a.ts = new_times
-        print(df.shape, '-(rept{})>'.format(repeat_times), a.shape)
+        #print(df.shape, '-(rept{})>'.format(repeat_times), a.shape)
         return a
 
     def normalize(self,df):

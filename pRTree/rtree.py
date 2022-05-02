@@ -43,8 +43,22 @@ class RTree:
         if self.root is None:
             self.root = RNode(entry.mbr, parent=None, children=[], entries=[entry])
             return
-        self._insert(entry,[self.root])
-    def _insert(self,entry,nodes:list):
+        self._insert(entry,self.root)
+
+    def _insert(self, entry, node):
+        '''
+        插入数据到节点列表中去
+        :param entry Entry 数据对象
+        :param nodes list of RNode 节点列表
+        '''
+        node = self._doSelection(entry,node)
+        node.addEntries(entry)
+        if len(node.entries) > self.context.max_entries_num:
+            cnodes = self._doSplit(node)
+            if len(cnodes) > self.context.max_children_num:
+                self._doMerge(cnodes)
+
+    def _insert2(self,entry,nodes:list):
         '''
         插入数据到节点列表中去
         :param entry Entry 数据对象
@@ -53,7 +67,7 @@ class RTree:
         #执行选择节点过程，没有选中的话就创建一个，如果子节点数太多，则执行合并操作
         node = self._doSelection(entry,nodes)
         if node is None:
-           node = RNode(entry.mbr, parent=None, children=[], entries=[])
+           node = RNode(entry.mbr, parent=None, children=[], entries=[entry])
            if nodes[0].parent is None:
                node.addEntries(entry)
                self.root = RNode(children=nodes+[node])
@@ -103,7 +117,7 @@ class RTree:
 
 
     def _doSelection(self,entry,nodes):
-        if nodes is None or len(nodes)==0:return None
+        #if nodes is None or len(nodes)==0:return None
         # elif len(nodes) == 1:return nodes[0]
         algName = self.context.select_nodes_func
         if algName is None or algName == '' :algName = RTree.SELECTION_DEFAULT

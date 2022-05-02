@@ -14,14 +14,14 @@ from wise.blockDAG import search_on_blockDAG as sob
 
 def run_query_transaction():
     # 配置
-    context = Configuration(max_children_num=16, max_entries_num=8, account_length=8, account_count=200,
+    context = Configuration(max_children_num=256, max_entries_num=64, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
 
     # 读取数据
     print("VRTree读取数据...")
     dataLoader = PocemonLoader()
     df = dataLoader.refresh()                         #读取数据
-    df = dataLoader.extend_df(df=df,repeat_times=1)   #扩大数据
+    #df = dataLoader.extend_df(df=df,repeat_times=1)   #扩大数据
     df = dataLoader.normalize(df)                     #归一化
     transactions = [BTransaction(row['type'],row['lon'],row['lat'],row['ts'],None) for index,row in df.iterrows()]
 
@@ -33,13 +33,13 @@ def run_query_transaction():
         tr.account = accs[i]
 
 
-    blocksizes = [30,40,50,60,70,80,90,100,110]
+    blocksizes = [30,50,80,100,120,140,160,180,200,240,280,300]
     for i,blocksize in enumerate(blocksizes):
-        print("VRTree创建区块,blocksize="+blocksize+"...")
+        print("VRTree创建区块,blocksize="+str(blocksize)+"...")
         # 创建区块链
         chain  = BlockChain(context,blocksize,transactions=transactions)
         # 创建查询分布
-        mbrs = chain.create_query(count=100,sizes=[2,2,2],posrandom=100,lengthcenter=0.05,lengthscale=0.025)
+        mbrs = BlockChain.create_query(count=200,sizes=[2,2,2],posrandom=100,lengthcenter=0.05,lengthscale=0.1)
 
         # 执行查询
         print("VRTree执行查询...")

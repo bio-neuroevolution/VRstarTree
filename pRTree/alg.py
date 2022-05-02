@@ -6,8 +6,59 @@ import sys
 from node import RNode
 from utils import Collections
 
+def select_nodes_rstar(tree,entry,node):
+    """
+    选择节点的R*-tree算法
+    :param tree RTree  R树
+    :param entry Entry 数据
+    :param node  在该节点的子节点一种找到一个合适的叶节点
+    """
+    # 叶节点已找到，直接返回
+    if node.isLeaf(): return node
+    # 不是叶子节点，且只有一个子节点
+    if len(node.children)==1:
+        return node.children[0] if node.children[0].isLeaf() else select_nodes_rstar(tree,entry,node.children[0])
 
-def select_nodes_rstar(tree,entry,nodes):
+    # 遍历所有子节点选择一个合适的
+    plans,min_overlop_area,min_area = [],0,0
+
+    for i, cnode in enumerate(node.children):
+        mbrs = [node.mbr for j, node in enumerate(node.children) if j != i]
+        mbr = node.mbr.union(entry.mbr)
+        overlop_area = sum([m.overlop(mbr).volume() for m in mbrs])
+        area = mbr.volume() - node.mbr.volume()
+
+        if len(plans) == 0:
+            plans.append({'index':i,'overlop_area':overlop_area,'area':area})
+        elif node.children[0].isLeaf() and abs(min_overlop_area-overlop_area)<=0:
+            plans.append({'index': i, 'overlop_area': overlop_area, 'area': area})
+            min_overlop_area = overlop_area
+            min_area = area
+        elif not node.children[0].isLeaf() and abs(min_area - area)<=0:
+            plans.append({'index': i, 'overlop_area': overlop_area, 'area': area})
+            min_overlop_area = overlop_area
+            min_area = area
+
+    # 只得到一个方案
+    if len(plans)==1:
+        if node.children[0].isLeaf():
+            return node.children[plans[0]['index']]
+        else:
+            return select_nodes_rstar(tree,entry,node.children[plans[0]['index']])
+    # 多个方案，且子节点不是叶子节点
+    if not node.children[0].isLeaf():
+        return select_nodes_rstar(tree,entry,node.children[plans[0]['index']])
+
+    # 多个方案，且子节点是叶子节点
+    optima,min_area = None,0
+    for plan in plans:
+        if optima is None or min_area > plan['area']:
+            optima,min_area = plan,plan['area']
+
+    return node.children[optima['index']]
+
+
+def select_nodes_level(tree,entry,nodes):
     """
     选择节点的R*-tree算法
     :param tree RTree  R树
@@ -168,7 +219,7 @@ def split_node_ref(tree,node):
     :param tree RTree
     :param node RNode 一定是叶节点
     '''
-    if len(node.entries)<=0:return [node]
+    if len(node.entries)<=0:return node.parent.children
 
     #引用计数降序
     refs = np.array([entry.ref for entry in node.entries])
@@ -205,7 +256,7 @@ def split_node_ref(tree,node):
 
     if node.parent is None:
         tree.root = RNode()
-        tree.children = [RNode(parent=tree.root,children=[],entries=g1),RNode(parent=tree.root,children=[],entries=g2)]
+        tree.root.children = [RNode(parent=tree.root,children=[],entries=g1),RNode(parent=tree.root,children=[],entries=g2)]
         return tree.root.children
     else:
         node.parent.children = list(set(node.parent.children) - set([node]))
