@@ -45,6 +45,19 @@ class PocemonLoader:
             df[col] = (df[col]-minv)/(maxv-minv)
         return df
 
+    def create_region(self,transactions,geotype_probs,length_probs,lengthcenters,lengthscales):
+        num = len(transactions)
+        geotypes = np.random.choice(a=[0,1,2], size=num, replace=True, p=geotype_probs)
+        for i,tr in enumerate(transactions):
+            if geotypes[i] == 0:
+                tr.update_geotype(0,0)
+            else:
+                lengthindex = np.random.choice(a=range(len(length_probs)), size=1, replace=True, p=length_probs)
+                length = np.random.normal(loc=lengthcenters[lengthindex], scale=lengthscales[lengthindex], size=1)
+                tr.update_geotype(geotypes[i], length)
+
+
+
     def create_account_name(self,count,length)->(list,list):
         """
         创建账户信息

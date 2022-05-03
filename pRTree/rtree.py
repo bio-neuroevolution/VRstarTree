@@ -39,7 +39,7 @@ class RTree:
         插入数据
         :param entry 数据对象
         '''
-        self.range = entry.mbr.union(self.range)
+        self.range = entry.mbr if self.range.empty() else entry.mbr.union(self.range)
         if self.root is None:
             self.root = RNode(entry.mbr, parent=None, children=[], entries=[entry])
             return

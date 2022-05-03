@@ -14,7 +14,7 @@ from verkle import VerklePatriciaTree, VerkleRTree, VPTView
 import geo
 
 class BTransaction(Entry):
-    def __init__(self,account,log,lat,ts,geotype,length,datas):
+    def __init__(self,account,log,lat,ts,datas,geotype=0,length=0):
         """
         交易信息
         :param account 账户Id
@@ -30,17 +30,35 @@ class BTransaction(Entry):
         self.log = log
         self.lat = lat
         self.ts = ts
+        self.geotype = geotype
+        self.length = length
         self.datas = datas
-        self.mbr = geo.Rectangle(dimension=3,values=[self.log,self.log,self.lat,self.lat,self.ts,self.ts])
+        self._update_mbr()
         self.ref = 0
-    def _update_mbr(self):
-        pass
+    def update_geotype(self,geotype,length):
+        self.geotype = geotype
+        self.length = length
+        self._update_mbr()
 
+    def _update_mbr(self):
+        if self.geotype == 0: #point
+            self.mbr = geo.Rectangle(dimension=3,values=[self.log,self.log,self.lat,self.lat,self.ts,self.ts])
+        elif self.geotype == 1:#linesegment
+            self.mbr = geo.Rectangle(dimension=3,values=[self.log,self.log + self.length,self.lat,self.lat+self.length,self.ts,self.ts])
+        else: # rectangle
+            self.mbr = geo.Rectangle(dimension=3,values=[self.log, self.log + self.length/2, self.lat, self.lat + self.length/2,
+                                             self.ts, self.ts])
     def __str__(self):
         return self.id+ ',' + str(self.datas) +','+str(self.mbr)+","+str(self.ref)
 
-class BRecord:
-    def __init__(self,account,log,lat,ts,account_dis):
+    def __getitem__(self, item):
+        if item == 'ts':return self.ts
+        elif item == 'lon': return self.log
+        elif item == 'lat': return self.lat
+        elif item == 'account': return self.account
+
+class BRecord(BTransaction):
+    def __init__(self,account,log,lat,ts,account_dis,geotype=0,length=0.):
         """
         轨迹信息
         :account str 账户
@@ -49,14 +67,11 @@ class BRecord:
         :ts 时间戳
         :account_dis 账户值
         """
-        self.account = account
-        self.id = account
-        self.log = log
-        self.lat = lat
-        self.ts = ts
+        super(BRecord,self).__init__(account,log,lat,ts,None,geotype,length)
         self.account_dis = account_dis
         self.ref = 0
-        self.mbr = geo.Rectangle(dimension=4, values=[self.log, self.log, self.lat, self.lat, self.ts, self.ts,self.account_dis,self.account_dis])
+        self.mbr = geo.Rectangle(dimension=4,values=[self.log, self.log + self.length/2, self.lat, self.lat + self.length/2,
+                                             self.ts, self.ts,self.account_dis,self.account_dis])
     def __str__(self):
         return self.id+ ',' +str(self.mbr)+","+str(self.ref)
 
@@ -164,6 +179,8 @@ class Block:
         return None if node is None else node.values
 
     def query_tran(self,mbr)->list:
+        if self.trantrieRoot is None: return []
+        if not self.trantrieRoot.range.isOverlop(mbr):return []
         return self.trantrieRoot.find(mbr)
     def query_traj(self,account:str,mbr:geo.Rectangle)->list:
         #r = geo.Rectangle(mbr.dimension + 1)

@@ -24,6 +24,7 @@ def run_query_transaction():
     #df = dataLoader.extend_df(df=df,repeat_times=1)   #扩大数据
     df = dataLoader.normalize(df)                     #归一化
     transactions = [BTransaction(row['type'],row['lon'],row['lat'],row['ts'],None) for index,row in df.iterrows()]
+    #dataLoader.create_region(transactions,geotype_probs=[0.5,0.0,0.5],length_probs=[0.6,0.3,0.1],lengthcenters=[0.001,0.01,0.05],lengthscales=[0.001,0.001,0.001])
 
     #创建和分配账户
     account_name,account_dis = dataLoader.create_account_name(context.account_count,context.account_length)
