@@ -14,13 +14,15 @@ from verkle import VerklePatriciaTree, VerkleRTree, VPTView
 import geo
 
 class BTransaction(Entry):
-    def __init__(self,account,log,lat,ts,datas):
+    def __init__(self,account,log,lat,ts,geotype,length,datas):
         """
         交易信息
         :param account 账户Id
         :param log 经度
         :param lat 维度
         :param ts  交易时间
+        :param geotype 几何类型
+        :param length 几何长度
         :param datas 交易数据
         """
         self.account = account
@@ -31,6 +33,8 @@ class BTransaction(Entry):
         self.datas = datas
         self.mbr = geo.Rectangle(dimension=3,values=[self.log,self.log,self.lat,self.lat,self.ts,self.ts])
         self.ref = 0
+    def _update_mbr(self):
+        pass
 
     def __str__(self):
         return self.id+ ',' + str(self.datas) +','+str(self.mbr)+","+str(self.ref)
