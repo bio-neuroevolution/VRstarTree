@@ -2,6 +2,8 @@ import time
 from random import random
 
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 
 from blocks import BTransaction, BlockChain
@@ -35,6 +37,7 @@ def run_query_transaction():
 
 
     blocksizes = [30,50,80,100,120,140,160,180,200,240,280,300]
+    rtreep,rtreea,kdtree = [],[],[]
     for i,blocksize in enumerate(blocksizes):
         print("VRTree创建区块,blocksize="+str(blocksize)+"...")
         # 创建区块链
@@ -47,7 +50,8 @@ def run_query_transaction():
         begin = time.time()
         for mbr in mbrs:
             chain.query_tran(mbr)
-        print("VRTree交易查询消耗（优化前）:" + str(time.time() - begin))
+        rtreep.append(time.time() - begin)
+        print("VRTree交易查询消耗（优化前）:" + str(rtreep[-1]))
 
         # 根据查询优化
         chain.optima()
@@ -56,7 +60,8 @@ def run_query_transaction():
         begin = time.time()
         for mbr in mbrs:
             chain.query_tran(mbr)
-        print("VRTree交易查询消耗（优化后）:" + str(time.time() - begin))
+        rtreea.append(time.time() - begin)
+        print("VRTree交易查询消耗（优化后）:" + str(rtreea[-1]))
 
         # 创建block_dag区块(用于对比，来自https://github.com/ILDAR9/spatiotemporal blockdag.)
         print('创建BlockDAG...')
@@ -83,7 +88,12 @@ def run_query_transaction():
             min_point, max_point = analysis_utils.__to_Cartesian_rect(min_point, max_point)
             rng = analysis_utils.__measure_time(sob.kd_range, 1, block_dag, min_point, max_point, t_start, t_end)
 
-        print("BlockDAG交易查询消耗:" + str(time.time() - begin))
+        kdtree.append(time.time() - begin)
+        print("BlockDAG交易查询消耗:" + str(kdtree[-1]))
+
+    plt.plot(blocksizes,rtreep,color='blue')
+    plt.plot(blocksizes, rtreea,color='red')
+    plt.plot(blocksizes,kdtree,color='black')
 
 if __name__ == '__main__':
     run_query_transaction()
