@@ -4,6 +4,12 @@ from random import random
 import numpy as np
 import matplotlib.pyplot as plt
 
+import logging
+logging.basicConfig(level=logging.WARNING,
+                    filename='./log.txt',
+                    filemode='w',
+                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+
 
 
 from blocks import BTransaction, BlockChain
@@ -20,7 +26,7 @@ def run_query_transaction():
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
 
     # 读取数据
-    print("VRTree读取数据...")
+    logging.info("VRTree读取数据...")
     dataLoader = PocemonLoader()
     df = dataLoader.refresh()                         #读取数据
     #df = dataLoader.extend_df(df=df,repeat_times=1)   #扩大数据
@@ -39,19 +45,19 @@ def run_query_transaction():
     blocksizes = [30,50,80,100,120,140,160,180,200,240,280,300]
     rtreep,rtreea,kdtree = [],[],[]
     for i,blocksize in enumerate(blocksizes):
-        print("VRTree创建区块,blocksize="+str(blocksize)+"...")
+        logging.info("VRTree创建区块,blocksize="+str(blocksize)+"...")
         # 创建区块链
         chain  = BlockChain(context,blocksize,transactions=transactions)
         # 创建查询分布
         mbrs = BlockChain.create_query(count=200,sizes=[2,2,2],posrandom=100,lengthcenter=0.05,lengthscale=0.1)
 
         # 执行查询
-        print("VRTree执行查询...")
+        logging.info("VRTree执行查询...")
         begin = time.time()
         for mbr in mbrs:
             chain.query_tran(mbr)
         rtreep.append(time.time() - begin)
-        print("VRTree交易查询消耗（优化前）:" + str(rtreep[-1]))
+        logging.info("VRTree交易查询消耗（优化前）:" + str(rtreep[-1]))
 
         # 根据查询优化
         chain.optima()
@@ -61,10 +67,10 @@ def run_query_transaction():
         for mbr in mbrs:
             chain.query_tran(mbr)
         rtreea.append(time.time() - begin)
-        print("VRTree交易查询消耗（优化后）:" + str(rtreea[-1]))
+        logging.info("VRTree交易查询消耗（优化后）:" + str(rtreea[-1]))
 
         # 创建block_dag区块(用于对比，来自https://github.com/ILDAR9/spatiotemporal blockdag.)
-        print('创建BlockDAG...')
+        logging.info('创建BlockDAG...')
         settings = dict(repeat_times=1, tr=60, D=3, bs=blocksize, alpha=10)
         block_dag = simulation.GeneratorDAGchain.generate(**settings)
 
@@ -81,7 +87,7 @@ def run_query_transaction():
             query_ranges.append({'minp':minp,'maxp':maxp,'t_start':t_start,'t_end':t_end})
 
         # 执行查询
-        print("BlockDAG执行查询...")
+        logging.info("BlockDAG执行查询...")
         begin = time.time()
         for i,query_range in enumerate(query_ranges):
             min_point, max_point, t_start, t_end = query_range['minp'],query_range['maxp'],query_range['t_start'],query_range['t_end']
@@ -89,7 +95,7 @@ def run_query_transaction():
             rng = analysis_utils.__measure_time(sob.kd_range, 1, block_dag, min_point, max_point, t_start, t_end)
 
         kdtree.append(time.time() - begin)
-        print("BlockDAG交易查询消耗:" + str(kdtree[-1]))
+        logging.info("BlockDAG交易查询消耗:" + str(kdtree[-1]))
 
     plt.plot(blocksizes,rtreep,color='blue')
     plt.plot(blocksizes, rtreea,color='red')
