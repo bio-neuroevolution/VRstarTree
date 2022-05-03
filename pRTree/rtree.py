@@ -107,7 +107,7 @@ class RTree:
 
         rs = []
         for cnode in node.children:
-            corss = node.mbr.overlop(mbr)
+            corss = cnode.mbr.overlop(mbr)
             if corss.empty():continue
             cnode.ref += 1
             rs = rs + self.find(mbr,cnode)
