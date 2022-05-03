@@ -4,11 +4,7 @@ from random import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-import logging
-logging.basicConfig(level=logging.WARNING,
-                    filename='./log.txt',
-                    filemode='w',
-                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+from log import LogHandler
 
 
 
@@ -26,6 +22,7 @@ def run_query_transaction():
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
 
     # 读取数据
+    logging = LogHandler('run')
     logging.info("VRTree读取数据...")
     dataLoader = PocemonLoader()
     df = dataLoader.refresh()                         #读取数据
