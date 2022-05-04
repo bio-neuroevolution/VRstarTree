@@ -209,6 +209,7 @@ class BlockChain:
         self.blocks = {}
         self.header = None
         self._create_blocks(transactions)
+        self.query_tran_node_count = 0
 
 
     @staticmethod
@@ -263,11 +264,22 @@ class BlockChain:
                 t = acc.ts
                 r = acc
         return r
+    def tran_nodecount(self):
+        """
+        交易Verkel R*
+        -tree树的节点数
+        """
+        r = 0
+        for i, b in self.blocks.items():
+            r += b.trantrieRoot.count()
+        return r
+
     def query_tran(self,mbr):
-        r = []
+        r,self.query_tran_node_count  = [],0
         for i, b in self.blocks.items():
             txs = b.query_tran(mbr)
             r = r +txs
+            self.query_tran_node_count += b.trantrieRoot.query_node_count
         return r
     def query_traj(self,account,mbr):
         r = []

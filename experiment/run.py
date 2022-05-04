@@ -18,7 +18,7 @@ from wise.blockDAG import search_on_blockDAG as sob
 
 def run_query_transaction():
     # 配置
-    context = Configuration(max_children_num=256, max_entries_num=64, account_length=8, account_count=200,
+    context = Configuration(max_children_num=64, max_entries_num=16, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
 
     # 读取数据
@@ -40,11 +40,13 @@ def run_query_transaction():
 
 
     blocksizes = [30,50,80,100,120,140,160,180,200,240,280,300]
+    #blocksizes = [50]
     rtreep,rtreea,kdtree = [],[],[]
     for i,blocksize in enumerate(blocksizes):
         logging.info("VRTree创建区块,blocksize="+str(blocksize)+"...")
         # 创建区块链
         chain  = BlockChain(context,blocksize,transactions=transactions)
+        logging.info("VRTree创建区块完成，交易VR*-tree节点数" + str(chain.tran_nodecount()))
         # 创建查询分布
         mbrs = BlockChain.create_query(count=200,sizes=[2,2,2],posrandom=100,lengthcenter=0.05,lengthscale=0.1)
 
@@ -54,17 +56,18 @@ def run_query_transaction():
         for mbr in mbrs:
             chain.query_tran(mbr)
         rtreep.append(time.time() - begin)
-        logging.info("VRTree交易查询消耗（优化前）:" + str(rtreep[-1]))
+        logging.info("VRTree交易查询消耗（优化前）:" + str(rtreep[-1])+'，访问节点数：'+str(chain.query_tran_node_count))
 
         # 根据查询优化
         chain.optima()
+        logging.info("VRTree区块优化完成，交易VR*-tree节点数" + str(chain.tran_nodecount()))
 
         # 第二次交易查询
         begin = time.time()
         for mbr in mbrs:
             chain.query_tran(mbr)
         rtreea.append(time.time() - begin)
-        logging.info("VRTree交易查询消耗（优化后）:" + str(rtreea[-1]))
+        logging.info("VRTree交易查询消耗（优化后）:" + str(rtreea[-1])+",访问节点数："+str(chain.query_tran_node_count))
 
         # 创建block_dag区块(用于对比，来自https://github.com/ILDAR9/spatiotemporal blockdag.)
         logging.info('创建BlockDAG...')

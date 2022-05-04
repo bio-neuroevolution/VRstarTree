@@ -30,9 +30,23 @@ class RTree:
         self.root = None
         if self.range is None:
             self.range = geo.EMPTY_RECT
+        self.query_node_count = 0
 
     def serialize(self):
         return {'range':str(self.range),'root':RNode.serialize(self.root)}
+
+    def count(self):
+        if self.root is None:return 0
+        value = [1]
+        self._count(self.root,value)
+        return value[0]
+    def _count(self,node,value):
+        value[0] += len(node.children)
+        if len(node.children) <= 0: return
+
+        for cnode in node.children:
+           self._count(cnode,value)
+        return value[0]
 
     def insert(self,entry:Entry):
         '''
@@ -94,6 +108,7 @@ class RTree:
             return []
         if self.root is None:return []
         if node is None:
+            self.query_node_count = 0
             return self.find(mbr,self.root)
 
         cross = node.mbr.overlop(mbr)
@@ -110,6 +125,7 @@ class RTree:
             corss = cnode.mbr.overlop(mbr)
             if corss.empty():continue
             cnode.ref += 1
+            self.query_node_count += 1
             rs = rs + self.find(mbr,cnode)
 
         return rs
