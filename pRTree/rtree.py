@@ -120,21 +120,24 @@ class RTree:
         q = queue.SimpleQueue()
         q.put(self.root)
         results,level = [],0
+        num = 0
         while not q.empty():
+            num += 1
             node = q.get_nowait()
             if node.isLeaf() and node.mbr.isOverlop(mbr):
                 node.ref += 1
+                self.query_node_count += len(node.entries)
                 rs = [entry for entry in node.entries if entry.mbr.isOverlop(mbr)]
-                self.query_node_count += len(rs)
                 for r in rs: r.ref += 1
                 results += rs
             else:
                 for cnode in node.children:
                     if not cnode.mbr.isOverlop(mbr):continue
                     self.query_node_count += 1
-                    node.ref += 1
+                    cnode.ref += 1
                     q.put_nowait(cnode)
 
+        print('query iter num='+str(num))
         return results
 
 
@@ -245,7 +248,7 @@ class RTree:
         RTree.algs['split_node'] = alg.split_node_ref
 
         entries = sorted(entries,key=lambda e:e.ref,reverse=True)
-        #self.context.max_entries_num = 8
+        self.context.max_entries_num = 8
         self.root = None
         for entry in entries:
             self.insert(entry)
