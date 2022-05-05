@@ -18,7 +18,7 @@ from wise.blockDAG import search_on_blockDAG as sob
 
 def run_query_transaction():
     # 配置
-    context = Configuration(max_children_num=64, max_entries_num=16, account_length=8, account_count=200,
+    context = Configuration(max_children_num=32, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
 
     # 读取数据

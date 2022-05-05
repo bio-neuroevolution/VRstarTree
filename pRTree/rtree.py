@@ -124,12 +124,13 @@ class RTree:
         while not q.empty():
             num += 1
             node = q.get_nowait()
-            if node.isLeaf() and node.mbr.isOverlop(mbr):
-                node.ref += 1
-                self.query_node_count += len(node.entries)
-                rs = [entry for entry in node.entries if entry.mbr.isOverlop(mbr)]
-                for r in rs: r.ref += 1
-                results += rs
+            if node.isLeaf():
+                if node.mbr.isOverlop(mbr):
+                    node.ref += 1
+                    self.query_node_count += len(node.entries)
+                    rs = [entry for entry in node.entries if entry.mbr.isOverlop(mbr)]
+                    for r in rs: r.ref += 1
+                    results += rs
             else:
                 for cnode in node.children:
                     if not cnode.mbr.isOverlop(mbr):continue
@@ -137,7 +138,7 @@ class RTree:
                     cnode.ref += 1
                     q.put_nowait(cnode)
 
-        print('query iter num='+str(num))
+        #print('query iter num='+str(num))
         return results
 
 
@@ -152,12 +153,13 @@ class RTree:
         cross = node.mbr.overlop(mbr)
         if cross.empty():return []
 
-        if node.isLeaf() and node.mbr.isOverlop(mbr):
-            node.ref += 1
-            self.query_node_count += len(node.entries)
-            rs = [entry for entry in node.entries if entry.mbr.isOverlop(mbr)]
-            for r in rs: r.ref += 1
-            return rs
+        if node.isLeaf():
+            if node.mbr.isOverlop(mbr):
+                node.ref += 1
+                self.query_node_count += len(node.entries)
+                rs = [entry for entry in node.entries if entry.mbr.isOverlop(mbr)]
+                for r in rs: r.ref += 1
+                return rs
 
         rs = []
         for cnode in node.children:
