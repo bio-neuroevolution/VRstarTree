@@ -111,8 +111,8 @@ class RTree:
 
         return self._insert(entry,node.children)
 
-    def get_levels(self, depth: int):
-        return self._levels[depth]
+
+
 
     def find(self, mbr: Rectangle):
         self.query_node_count = 0
@@ -201,10 +201,15 @@ class RTree:
             r = r + self.all_entries(cnode)
         return  r
 
-    def rearrage_all(self):
+
+    def rearrage_all3(self):
+        oldalgs = RTree.algs.copy()
+        RTree.algs['merge_nodes'] = alg.merge_nodes_ref
+        RTree.algs['split_node'] = alg.split_node_ref
+
         q = queue.SimpleQueue()
         q.put(self.root)
-        self.context.max_entries_num = 8
+        #self.context.max_entries_num = 8
         while not q.empty():
             node = q.get_nowait()
             if node.isLeaf():continue
@@ -224,17 +229,23 @@ class RTree:
 
                 if len(node.children)>self.context.max_children_num:
                     self._doMerge(node.children)
-
+        RTree.algs = oldalgs
 
     def rearrage_all2(self):
+        entries = self.all_entries()
+        entries = sorted(entries, key=lambda e: e.ref, reverse=True)
+        for i,entry in enumerate(entries):
+            pass
+
+
+    def rearrage_all(self):
         entries = self.all_entries()
         oldalgs = RTree.algs.copy()
         RTree.algs['merge_nodes'] = alg.merge_nodes_ref
         RTree.algs['split_node'] = alg.split_node_ref
 
-
         entries = sorted(entries,key=lambda e:e.ref,reverse=True)
-        self.context.max_entries_num = 8
+        #self.context.max_entries_num = 8
         self.root = None
         for entry in entries:
             self.insert(entry)

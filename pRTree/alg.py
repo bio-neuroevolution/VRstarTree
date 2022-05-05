@@ -173,11 +173,11 @@ def merge_nodes_rstar(tree,nodes):
     p2 = RNode(parent=nodes[0].parent,children=g2,entries=[])
     parent._update_mbr()
     
-    if parent.parent is not None:
-        if len(parent.parent.children) > tree.context.max_children_num:
-            return merge_nodes_rstar(tree, parent.parent.children)
-    else:
-        return parent.children
+    #if parent.parent is not None:
+    #    if len(parent.parent.children) > tree.context.max_children_num:
+    #        return merge_nodes_rstar(tree, parent.parent.children)
+    #else:
+    return parent.children
 
 
 def split_node_rstar(tree,node):
