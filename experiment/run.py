@@ -39,8 +39,8 @@ def run_query_transaction():
         tr.account = accs[i]
 
 
-    blocksizes = [30,50,80,100,120,140,160,180,200,240,280,300]
-    #blocksizes = [50]
+    #blocksizes = [30,50,80,100,120,140,160,180,200,240,280,300]
+    blocksizes = [50]
     rtreep,rtreea,kdtree = [],[],[]
     for i,blocksize in enumerate(blocksizes):
         logging.info("VRTree创建区块,blocksize="+str(blocksize)+"...")

@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import math
+import queue
+from sklearn.cluster import DBSCAN
+
 import alg
 import geo
 from geo import Rectangle
@@ -31,6 +35,7 @@ class RTree:
         if self.range is None:
             self.range = geo.EMPTY_RECT
         self.query_node_count = 0
+        self._levels = {}
 
     def serialize(self):
         return {'range':str(self.range),'root':RNode.serialize(self.root)}
@@ -42,7 +47,9 @@ class RTree:
         return value[0]
     def _count(self,node,value):
         value[0] += len(node.children)
-        if len(node.children) <= 0: return
+        if len(node.children) <= 0:
+            value[0] += len(node.entries)
+            return
 
         for cnode in node.children:
            self._count(cnode,value)
@@ -56,6 +63,7 @@ class RTree:
         self.range = entry.mbr if self.range.empty() else entry.mbr.union(self.range)
         if self.root is None:
             self.root = RNode(entry.mbr, parent=None, children=[], entries=[entry])
+            self._levels[1] = [self.root]
             return
         self._insert(entry,self.root)
 
@@ -103,7 +111,34 @@ class RTree:
 
         return self._insert(entry,node.children)
 
-    def find(self,mbr:Rectangle,node:RNode=None):
+    def get_levels(self, depth: int):
+        return self._levels[depth]
+
+    def find(self, mbr: Rectangle):
+        self.query_node_count = 0
+        if not self.root.mbr.isOverlop(mbr): return []
+        q = queue.SimpleQueue()
+        q.put(self.root)
+        results,level = [],0
+        while not q.empty():
+            node = q.get_nowait()
+            if node.isLeaf() and node.mbr.isOverlop(mbr):
+                node.ref += 1
+                rs = [entry for entry in node.entries if entry.mbr.isOverlop(mbr)]
+                self.query_node_count += len(rs)
+                for r in rs: r.ref += 1
+                results += rs
+            else:
+                for cnode in node.children:
+                    if not cnode.mbr.isOverlop(mbr):continue
+                    self.query_node_count += 1
+                    node.ref += 1
+                    q.put_nowait(cnode)
+
+        return results
+
+
+    def find2(self,mbr:Rectangle,node:RNode=None):
         if mbr is None or mbr.empty():
             return []
         if self.root is None:return []
@@ -114,8 +149,9 @@ class RTree:
         cross = node.mbr.overlop(mbr)
         if cross.empty():return []
 
-        if node.isLeaf():
+        if node.isLeaf() and node.mbr.isOverlop(mbr):
             node.ref += 1
+            self.query_node_count += len(node.entries)
             rs = [entry for entry in node.entries if entry.mbr.isOverlop(mbr)]
             for r in rs: r.ref += 1
             return rs
@@ -166,11 +202,39 @@ class RTree:
         return  r
 
     def rearrage_all(self):
+        q = queue.SimpleQueue()
+        q.put(self.root)
+        self.context.max_entries_num = 8
+        while not q.empty():
+            node = q.get_nowait()
+            if node.isLeaf():continue
+            if len(node.children)<=0:continue
+            for cnode in node.children:
+                q.put_nowait(cnode)
+            if node.children[0].isLeaf():
+                entries = []
+                for cnode in node.children:
+                    entries += cnode.entries
+                entries = sorted(entries,key=lambda e:e.ref,reverse=True)
+                size = math.ceil(len(entries) / self.context.max_entries_num)
+                node.children = []
+                children = []
+                for i in range(size):
+                    children.append(RNode(parent=node,children=[],entries=entries[i*self.context.max_entries_num:(i+1)*self.context.max_entries_num]))
+
+                if len(node.children)>self.context.max_children_num:
+                    self._doMerge(node.children)
+
+
+    def rearrage_all2(self):
         entries = self.all_entries()
         oldalgs = RTree.algs.copy()
         RTree.algs['merge_nodes'] = alg.merge_nodes_ref
         RTree.algs['split_node'] = alg.split_node_ref
 
+
+        entries = sorted(entries,key=lambda e:e.ref,reverse=True)
+        self.context.max_entries_num = 8
         self.root = None
         for entry in entries:
             self.insert(entry)

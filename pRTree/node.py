@@ -32,6 +32,7 @@ class RNode:
         self.children = children
         self.entries = entries
         self.ref = 0
+        self.depth = 1 if parent is None else parent.depth+1
 
         if len(children)>0:
             Collections.assign('parent',self,self.children)
@@ -40,8 +41,12 @@ class RNode:
             self.mbr = Rectangle.unions([e.mbr for e in entries])
         if self.parent is not None:
             self.parent.children.append(self)
+
     def __str__(self):
         return str(self.mbr)
+
+
+
 
     @classmethod
     def serialize(cls, node):

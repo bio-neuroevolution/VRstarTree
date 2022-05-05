@@ -135,7 +135,14 @@ def merge_nodes_ref(tree,nodes):
     p1 = RNode(parent=nodes[0].parent,children=nodes[:i+1],entries=[])
     p2 = RNode(parent=nodes[0].parent,children=nodes[i+1:],entries=[])
     parent._update_mbr()
-    return parent.children
+
+    if parent.parent is not None:
+        if len(parent.parent.children) > tree.context.max_children_num:
+            return merge_nodes_ref(tree, parent.parent.children)
+    else:
+        return parent.children
+
+
 
 def merge_nodes_rstar(tree,nodes):
     '''
@@ -165,7 +172,12 @@ def merge_nodes_rstar(tree,nodes):
     p1 = RNode(parent=nodes[0].parent,children=g1,entries=[])
     p2 = RNode(parent=nodes[0].parent,children=g2,entries=[])
     parent._update_mbr()
-    return parent.children
+    
+    if parent.parent is not None:
+        if len(parent.parent.children) > tree.context.max_children_num:
+            return merge_nodes_rstar(tree, parent.parent.children)
+    else:
+        return parent.children
 
 
 def split_node_rstar(tree,node):
