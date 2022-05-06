@@ -18,19 +18,25 @@ from wise.blockDAG import search_on_blockDAG as sob
 # 读取数据
 logging = LogHandler('run')
 
-def run_query_transaction(blocksizes=None):
-    # 配置
-    context = Configuration(max_children_num=32, max_entries_num=8, account_length=8, account_count=200,
-                            select_nodes_func='', merge_nodes_func='', split_node_func='')
-
-
+def query_transaction(conetxt,blocksize,region_params=None):
+    """
+    一次查询实验
+    :param conetxt 配置信息
+    :param blocksizes 区块大小列表
+    :param region_params 生成立方体实验数据参数
+    """
     logging.info("VRTree读取数据...")
     dataLoader = PocemonLoader()
     df = dataLoader.refresh()                         #读取数据
     #df = dataLoader.extend_df(df=df,repeat_times=1)   #扩大数据
     df = dataLoader.normalize(df)                     #归一化
     transactions = [BTransaction(row['type'],row['lon'],row['lat'],row['ts'],None) for index,row in df.iterrows()]
-    #dataLoader.create_region(transactions,geotype_probs=[0.5,0.0,0.5],length_probs=[0.6,0.3,0.1],lengthcenters=[0.001,0.01,0.05],lengthscales=[0.001,0.001,0.001])
+    if region_params is not None:
+        dataLoader.create_region(transactions,
+                                 geotype_probs=region_params['geotype_probs'],
+                                 length_probs=region_params['length_probs'],
+                                 lengthcenters=region_params['lengthcenters'],
+                                 lengthscales=region_params['lengthscales'])
 
     #创建和分配账户
     account_name,account_dis = dataLoader.create_account_name(context.account_count,context.account_length)
@@ -39,10 +45,6 @@ def run_query_transaction(blocksizes=None):
     for i,tr in enumerate(transactions):
         tr.account = accs[i]
 
-
-    #blocksizes = [30,50,80,100,120,140,160,180,200,240,280,300]
-    if blocksizes is None:
-        blocksizes = [50]
     rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree = [],[],[],[],[]
     for i,blocksize in enumerate(blocksizes):
         logging.info("VRTree创建区块,blocksize="+str(blocksize)+"...")
@@ -75,7 +77,7 @@ def run_query_transaction(blocksizes=None):
 
         # 创建block_dag区块(用于对比，来自https://github.com/ILDAR9/spatiotemporal blockdag.)
         logging.info('创建BlockDAG...')
-        settings = dict(repeat_times=1, tr=60, D=3, bs=blocksize, alpha=10)
+        settings = dict(repeat_times=1, tr=60, D=3, bs=blocksize, alpha=10).update(region_params)
         block_dag = simulation.GeneratorDAGchain.generate(**settings)
 
         # 创建查询
@@ -106,12 +108,12 @@ def run_query_transaction(blocksizes=None):
     #plt.plot(blocksizes, rtreea,color='red')
     #plt.plot(blocksizes,kdtree,color='black')
 
-if __name__ == '__main__':
-    blocksizes = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200]
-    rtreep,rtreep_nodecount,rtreea, rtreea_nodecount,kdtree = [[]]*len(blocksizes),[[]]*len(blocksizes),[[]]*len(blocksizes),[[]]*len(blocksizes),[[]]*len(blocksizes)
+def run_query_transaction(conetxt,count=10,blocksizes=None,region_params=None):
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree = [[]] * len(blocksizes), [[]] * len(blocksizes), [
+        []] * len(blocksizes), [[]] * len(blocksizes), [[]] * len(blocksizes)
     for i in range(10):
-        rp,rpnode,ra,ranode,kd = run_query_transaction(blocksizes)
-        for  j in range(blocksizes):
+        rp, rpnode, ra, ranode, kd = query_transaction(context, blocksizes)
+        for j in range(blocksizes):
             rtreep[j] = rtreep[j] + [rp[j]]
             rtreep_nodecount[j] = rtreep_nodecount[j] + [rpnode[j]]
             rtreea[j] = rtreea[j] + [rp[j]]
@@ -130,11 +132,39 @@ if __name__ == '__main__':
     logging.info("VRTree交易访问节点数（优化前）:" + str(rtreea_nodecount))
     logging.info("BlockDAG交易查询消耗:" + str(kdtree))
 
+    return rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree
+
+if __name__ == '__main__':
+
+    # 执行实验一
+    context = Configuration(max_children_num=32, max_entries_num=8, account_length=8, account_count=200,
+                            select_nodes_func='', merge_nodes_func='', split_node_func='')
+    blocksizes = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200]
+
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount,kdtree = run_query_transaction(context,count=10,blocksizes=blocksizes,region_params=None)
     plt.figure(1)
     plt.plot(blocksizes, rtreep, color='blue')
     plt.plot(blocksizes, rtreea,color='red')
     plt.plot(blocksizes,kdtree,color='black')
+    plt.legend()
 
     plt.figure(2)
     plt.plot(blocksizes, rtreep_nodecount, color='blue')
     plt.plot(blocksizes, rtreea_nodecount, color='red')
+    plt.legend()
+
+    # 执行实验二：
+    region_params = {'geotype_probs':[0.5, 0.0, 0.5],'length_probs':[0.6, 0.3, 0.1],'lengthcenters':[0.001, 0.01,0.05],'lengthscales':[0.001, 0.001, 0.001]}
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree = run_query_transaction(context, count=10,
+                                                                                       blocksizes=blocksizes,
+                                                                                       region_params=region_params)
+    plt.figure(3)
+    plt.plot(blocksizes, rtreep, color='blue')
+    plt.plot(blocksizes, rtreea, color='red')
+    plt.plot(blocksizes, kdtree, color='black')
+    plt.legend()
+
+    plt.figure(4)
+    plt.plot(blocksizes, rtreep_nodecount, color='blue')
+    plt.plot(blocksizes, rtreea_nodecount, color='red')
+    plt.legend()
