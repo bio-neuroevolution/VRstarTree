@@ -15,14 +15,15 @@ from wise import simulation
 from wise.blockDAG import analysis_utils
 from wise.blockDAG import search_on_blockDAG as sob
 
+# 读取数据
+logging = LogHandler('run')
 
-def run_query_transaction():
+def run_query_transaction(blocksizes=None):
     # 配置
     context = Configuration(max_children_num=32, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
 
-    # 读取数据
-    logging = LogHandler('run')
+
     logging.info("VRTree读取数据...")
     dataLoader = PocemonLoader()
     df = dataLoader.refresh()                         #读取数据
@@ -40,8 +41,9 @@ def run_query_transaction():
 
 
     #blocksizes = [30,50,80,100,120,140,160,180,200,240,280,300]
-    blocksizes = [50]
-    rtreep,rtreea,kdtree = [],[],[]
+    if blocksizes is None:
+        blocksizes = [50]
+    rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree = [],[],[],[],[]
     for i,blocksize in enumerate(blocksizes):
         logging.info("VRTree创建区块,blocksize="+str(blocksize)+"...")
         # 创建区块链
@@ -56,6 +58,7 @@ def run_query_transaction():
         for mbr in mbrs:
             chain.query_tran(mbr)
         rtreep.append(time.time() - begin)
+        rtreep_nodecount.append(chain.query_tran_node_count)
         logging.info("VRTree交易查询消耗（优化前）:" + str(rtreep[-1])+'，访问节点数：'+str(chain.query_tran_node_count))
 
         # 根据查询优化
@@ -67,6 +70,7 @@ def run_query_transaction():
         for mbr in mbrs:
             chain.query_tran(mbr)
         rtreea.append(time.time() - begin)
+        rtreea_nodecount.append(chain.query_tran_node_count)
         logging.info("VRTree交易查询消耗（优化后）:" + str(rtreea[-1])+",访问节点数："+str(chain.query_tran_node_count))
 
         # 创建block_dag区块(用于对比，来自https://github.com/ILDAR9/spatiotemporal blockdag.)
@@ -97,9 +101,40 @@ def run_query_transaction():
         kdtree.append(time.time() - begin)
         logging.info("BlockDAG交易查询消耗:" + str(kdtree[-1]))
 
-    plt.plot(blocksizes,rtreep,color='blue')
+    return rtreep,rtreea,kdtree
+    #plt.plot(blocksizes,rtreep,color='blue')
+    #plt.plot(blocksizes, rtreea,color='red')
+    #plt.plot(blocksizes,kdtree,color='black')
+
+if __name__ == '__main__':
+    blocksizes = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200]
+    rtreep,rtreep_nodecount,rtreea, rtreea_nodecount,kdtree = [[]]*len(blocksizes),[[]]*len(blocksizes),[[]]*len(blocksizes),[[]]*len(blocksizes),[[]]*len(blocksizes)
+    for i in range(10):
+        rp,rpnode,ra,ranode,kd = run_query_transaction(blocksizes)
+        for  j in range(blocksizes):
+            rtreep[j] = rtreep[j] + [rp[j]]
+            rtreep_nodecount[j] = rtreep_nodecount[j] + [rpnode[j]]
+            rtreea[j] = rtreea[j] + [rp[j]]
+            rtreea_nodecount[j] = rtreea_nodecount[j] + [ranode[j]]
+            kdtree[j] = kdtree[j] + [kd[j]]
+
+    rtreep = [np.average(e) for e in rtreep]
+    rtreep_nodecount = [np.average(e) for e in rtreep_nodecount]
+    rtreea = [np.average(e) for e in rtreea]
+    rtreea_nodecount = [np.average(e) for e in rtreea_nodecount]
+    kdtree = [np.average(e) for e in kdtree]
+
+    logging.info("VRTree交易查询消耗（优化前）:" + str(rtreep))
+    logging.info("VRTree交易访问节点数（优化前）:" + str(rtreep_nodecount))
+    logging.info("VRTree交易查询消耗（优化前）:" + str(rtreea))
+    logging.info("VRTree交易访问节点数（优化前）:" + str(rtreea_nodecount))
+    logging.info("BlockDAG交易查询消耗:" + str(kdtree))
+
+    plt.figure(1)
+    plt.plot(blocksizes, rtreep, color='blue')
     plt.plot(blocksizes, rtreea,color='red')
     plt.plot(blocksizes,kdtree,color='black')
 
-if __name__ == '__main__':
-    run_query_transaction()
+    plt.figure(2)
+    plt.plot(blocksizes, rtreep_nodecount, color='blue')
+    plt.plot(blocksizes, rtreea_nodecount, color='red')
