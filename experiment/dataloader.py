@@ -52,7 +52,7 @@ class PocemonLoader:
             if geotypes[i] == 0:
                 tr.update_geotype(0,0)
             else:
-                lengthindex = np.random.choice(a=range(len(length_probs)), size=1, replace=True, p=length_probs)
+                lengthindex = np.random.choice(a=range(len(length_probs)), size=1, replace=True, p=length_probs)[0]
                 length = np.random.normal(loc=lengthcenters[lengthindex], scale=lengthscales[lengthindex], size=1)
                 tr.update_geotype(geotypes[i], length)
 
