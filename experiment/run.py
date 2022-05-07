@@ -18,7 +18,7 @@ from wise.blockDAG import search_on_blockDAG as sob
 # 读取数据
 logging = LogHandler('run')
 
-def query_transaction(context,blocksizes,content='all',region_params=None):
+def query_transaction(context,blocksizes,content='all',region_params={}):
     """
     一次查询实验
     :param conetxt 配置信息
@@ -184,6 +184,9 @@ def experiment2():
     plt.plot(blocksizes, rtreep_nodecount, color='blue')
     plt.plot(blocksizes, rtreea_nodecount, color='red')
     plt.legend()
+
+def experiment3():
+    pass
 
 
 if __name__ == '__main__':
