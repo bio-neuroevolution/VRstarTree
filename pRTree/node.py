@@ -50,11 +50,13 @@ class RNode:
 
     @classmethod
     def serialize(cls, node):
+        if node is None:return {}
         res = {'mbr':str(node.mbr),'ref':node.ref,'entries':str(node.entries)}
         children = []
         for c in node.children:
             children.append(RNode.serialize(c))
-
+        res['chilren'] = children
+        return res
 
     def addEntries(self,*entries):
         """
