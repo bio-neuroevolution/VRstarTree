@@ -31,7 +31,7 @@ def query_transaction(context,blocksizes,content='all',region_params={}):
     #df = dataLoader.extend_df(df=df,repeat_times=1)   #扩大数据
     df = dataLoader.normalize(df)                     #归一化
     transactions = [BTransaction(row['type'],row['lon'],row['lat'],row['ts'],None) for index,row in df.iterrows()]
-    if region_params is not None:
+    if len(region_params)>0:
         dataLoader.create_region(transactions,
                                  geotype_probs=region_params['geotype_probs'],
                                  length_probs=region_params['length_probs'],
@@ -124,7 +124,7 @@ def query_transaction(context,blocksizes,content='all',region_params={}):
     #plt.plot(blocksizes, rtreea,color='red')
     #plt.plot(blocksizes,kdtree,color='black')
 
-def run_query_transaction(context,count=10,blocksizes=None,content='all',region_params=None):
+def run_query_transaction(context,count=10,blocksizes=None,content='all',region_params={}):
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = [[]] * len(blocksizes), [[]] * len(blocksizes), [
         []] * len(blocksizes), [[]] * len(blocksizes), [[]] * len(blocksizes),[[]] * len(blocksizes)
     for i in range(10):
@@ -159,7 +159,7 @@ def experiment1():
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = run_query_transaction(context, count=1,
                                                                                        blocksizes=blocksizes,
                                                                                        content='all',
-                                                                                       region_params=None)
+                                                                                       region_params={})
     plt.figure(1)
     plt.plot(blocksizes, rtreep, color='blue')
     plt.plot(blocksizes, rtreea, color='red')
