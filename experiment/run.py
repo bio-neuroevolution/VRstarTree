@@ -46,22 +46,19 @@ def query_transaction(context,blocksizes,content='all',region_params={}):
         tr.account = accs[i]
 
 
-    rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree = [],[],[],[],[]
+    rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree,scan = [],[],[],[],[],[]
     for i,blocksize in enumerate(blocksizes):
         logging.info("blocksize=" + str(blocksize))
         # 创建查询分布
         mbrs = BlockChain.create_query(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
 
         if content == 'all' or content.__contains__('rtree'):
-
             logging.info("VRTree创建区块...")
             # 创建区块链
             chain  = BlockChain(context,blocksize,transactions=transactions)
             logging.info("VRTree创建区块完成，交易VR*-tree节点数" + str(chain.tran_nodecount()))
 
-
             # 执行查询
-            logging.info("VRTree执行查询...")
             begin = time.time()
             for mbr in mbrs:
                 chain.query_tran(mbr)
@@ -112,22 +109,33 @@ def query_transaction(context,blocksizes,content='all',region_params={}):
             kdtree.append(time.time() - begin)
             logging.info("BlockDAG交易查询消耗:" + str(kdtree[-1]))
 
-    return rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree
+        if content == 'all' or content.__contains__('scan'):
+            logging.info("scan执行查询...")
+            scancount = 0
+            begin = time.time()
+            for mbr in mbrs:
+                scancount += [tx for tx in transactions if tx.mbr.isOverlop(mbr)]
+            scan.append(time.time() - begin)
+            logging.info("scan交易查询消耗:" + str(scan[-1]))
+
+
+    return rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree,scan
     #plt.plot(blocksizes,rtreep,color='blue')
     #plt.plot(blocksizes, rtreea,color='red')
     #plt.plot(blocksizes,kdtree,color='black')
 
 def run_query_transaction(context,count=10,blocksizes=None,content='all',region_params=None):
-    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree = [[]] * len(blocksizes), [[]] * len(blocksizes), [
-        []] * len(blocksizes), [[]] * len(blocksizes), [[]] * len(blocksizes)
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = [[]] * len(blocksizes), [[]] * len(blocksizes), [
+        []] * len(blocksizes), [[]] * len(blocksizes), [[]] * len(blocksizes),[[]] * len(blocksizes)
     for i in range(10):
-        rp, rpnode, ra, ranode, kd = query_transaction(context, blocksizes,content,region_params)
+        rp, rpnode, ra, ranode, kd,sc = query_transaction(context, blocksizes,content,region_params)
         for j in range(blocksizes):
             rtreep[j] = rtreep[j] + [rp[j]]
             rtreep_nodecount[j] = rtreep_nodecount[j] + [rpnode[j]]
             rtreea[j] = rtreea[j] + [rp[j]]
             rtreea_nodecount[j] = rtreea_nodecount[j] + [ranode[j]]
             kdtree[j] = kdtree[j] + [kd[j]]
+            scan[i] = scan[j] + [sc[j]]
 
     rtreep = [np.average(e) for e in rtreep]
     rtreep_nodecount = [np.average(e) for e in rtreep_nodecount]
@@ -141,14 +149,14 @@ def run_query_transaction(context,count=10,blocksizes=None,content='all',region_
     logging.info("VRTree交易访问节点数（优化前）:" + str(rtreea_nodecount))
     logging.info("BlockDAG交易查询消耗:" + str(kdtree))
 
-    return rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree
+    return rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree,scan
 
 def experiment1():
     context = Configuration(max_children_num=32, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
     blocksizes = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200]
 
-    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree = run_query_transaction(context, count=3,
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = run_query_transaction(context, count=1,
                                                                                        blocksizes=blocksizes,
                                                                                        content='all',
                                                                                        region_params=None)
@@ -156,6 +164,7 @@ def experiment1():
     plt.plot(blocksizes, rtreep, color='blue')
     plt.plot(blocksizes, rtreea, color='red')
     plt.plot(blocksizes, kdtree, color='black')
+    plt.plot(blocksizes, scan, color='green')
     plt.legend()
 
     plt.figure(2)

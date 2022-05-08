@@ -192,6 +192,9 @@ class Block:
         return self.trajetrieRoot.find(mbr)
 
 
+
+
+
 class BlockEnocder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Block):
