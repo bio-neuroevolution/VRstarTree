@@ -114,7 +114,7 @@ def query_transaction(context,blocksizes,content='all',region_params={}):
             scancount = 0
             begin = time.time()
             for mbr in mbrs:
-                scancount += [tx for tx in transactions if tx.mbr.isOverlop(mbr)]
+                scancount += len([tx for tx in transactions if tx.mbr.isOverlop(mbr)])
             scan.append(time.time() - begin)
             logging.info("scan交易查询消耗:" + str(scan[-1]))
 
@@ -154,7 +154,7 @@ def run_query_transaction(context,count=10,blocksizes=None,content='all',region_
 def experiment1():
     context = Configuration(max_children_num=32, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
-    blocksizes = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200]
+    blocksizes = [30, 50, 70, 90, 110, 130, 150, 170, 190]
 
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = run_query_transaction(context, count=1,
                                                                                        blocksizes=blocksizes,
@@ -175,7 +175,7 @@ def experiment1():
 def experiment2():
     context = Configuration(max_children_num=32, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
-    blocksizes = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200]
+    blocksizes = [30, 50, 70, 90, 110, 130, 150, 170, 190]
 
     region_params = {'geotype_probs': [0.5, 0.0, 0.5], 'length_probs': [0.6, 0.3, 0.1],
                      'lengthcenters': [50., 100., 300.], 'lengthscales': [1., 1., 1.]}
