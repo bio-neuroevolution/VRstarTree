@@ -133,8 +133,8 @@ class RTree:
                     results += rs
             else:
                 for cnode in node.children:
-                    if not cnode.mbr.isOverlop(mbr):continue
                     self.query_node_count += 1
+                    if not cnode.mbr.isOverlop(mbr):continue
                     cnode.ref += 1
                     q.put_nowait(cnode)
 

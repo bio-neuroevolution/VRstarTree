@@ -117,7 +117,7 @@ class Block:
         self.timestamp = self.end_time
         self.statetrieRoot = self._create_vpt(transactions)
         self.trantrieRoot = self._create_tran_trie(transactions)
-        self.trajetrieRoot = self._create_traj_trie(transactions)
+        #self.trajetrieRoot = self._create_traj_trie(transactions)
     def serialize(self):
         rs = {'context': self.context}
         rs.update({'nonce':self.nonce,'parent_hash': str(self.parent_hash),'next_hash':str(self.next_hash)})
