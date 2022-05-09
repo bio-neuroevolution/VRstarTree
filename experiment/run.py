@@ -56,7 +56,7 @@ def query_transaction(context,blocksizes,content='all',region_params={}):
             logging.info("VRTree创建区块...")
             # 创建区块链
             chain  = BlockChain(context,blocksize,transactions=transactions)
-            logging.info("VRTree创建区块完成，交易VR*-tree节点总数=" + str(chain.tran_nodecount()) + ",平均="+str(chain.tran_nodecount()/len(chain.blocks))+",深度="+str(chain.header.trantrieRoot.depth()))
+            logging.info("VRTree创建区块完成，交易VR*-tree节点总数=" + str(chain.tran_nodecount()) + ",平均="+str(chain.tran_nodecount()/len(chain.blocks))+",深度="+str(chain.header.trantrieRoot.depth))
 
             # 执行查询
             begin = time.time()
@@ -70,7 +70,7 @@ def query_transaction(context,blocksizes,content='all',region_params={}):
             # 根据查询优化
             chain.optima()
             logging.info("VRTree区块优化完成，交易VR*-tree节点总数=" + str(chain.tran_nodecount()) + ",平均=" + str(
-                chain.tran_nodecount() / len(chain.blocks)) + ",深度=" + str(chain.header.trantrieRoot.depth()))
+                chain.tran_nodecount() / len(chain.blocks)) + ",深度=" + str(chain.header.trantrieRoot.depth))
 
 
             # 第二次交易查询
@@ -131,7 +131,7 @@ def run_query_transaction(context,count=10,blocksizes=None,content='all',region_
         []] * len(blocksizes), [[]] * len(blocksizes), [[]] * len(blocksizes),[[]] * len(blocksizes)
     for i in range(10):
         rp, rpnode, ra, ranode, kd,sc = query_transaction(context, blocksizes,content,region_params)
-        for j in range(blocksizes):
+        for j in range(len(blocksizes)):
             rtreep[j] = rtreep[j] + [rp[j]]
             rtreep_nodecount[j] = rtreep_nodecount[j] + [rpnode[j]]
             rtreea[j] = rtreea[j] + [rp[j]]
@@ -154,9 +154,9 @@ def run_query_transaction(context,count=10,blocksizes=None,content='all',region_
     return rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree,scan
 
 def experiment1():
-    context = Configuration(max_children_num=32, max_entries_num=8, account_length=8, account_count=200,
+    context = Configuration(max_children_num=8, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
-    blocksizes = [500]
+    blocksizes = [50]
 
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = run_query_transaction(context, count=1,
                                                                                        blocksizes=blocksizes,

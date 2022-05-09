@@ -237,7 +237,7 @@ def merge_nodes_rstar(tree,nodes):
 
     parent = nodes[0].parent
     if parent.parent is None:
-        tree.root = RNode()
+        tree.root = RNode(mbr=None,parent=None,children=[],entries=[])
         tree.depth += 1
         p1 = RNode(parent=tree.root, children=g1, entries=[])
         p2 = RNode(parent=tree.root, children=g2, entries=[])
@@ -293,7 +293,7 @@ def split_node_ref(tree,node):
                 optima,minarea = plan,area
 
     if node.parent is None:
-        tree.root = RNode()
+        tree.root = RNode(mbr=None,parent=None,children=[],entries=[])
         tree.depth += 1
         tree.root.children = [RNode(parent=tree.root,children=[],entries=g1),RNode(parent=tree.root,children=[],entries=g2)]
         tree.root._update_mbr()
@@ -335,7 +335,7 @@ def merge_nodes_ref(tree,nodes):
 
     parent = nodes[0].parent
     if parent.parent is None:
-        tree.root = RNode()
+        tree.root = RNode(mbr=None,parent=None,children=[],entries=[])
         tree.depth += 1
         p1 = RNode(parent=tree.root, children=g1, entries=[])
         p2 = RNode(parent=tree.root, children=g2, entries=[])

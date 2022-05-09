@@ -32,7 +32,6 @@ class RNode:
         self.children = children
         self.entries = entries
         self.ref = 0
-        self.depth = 1 if parent is None else parent.depth+1
 
         if len(children)>0:
             Collections.assign('parent',self,self.children)

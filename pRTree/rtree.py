@@ -236,10 +236,20 @@ class RTree:
         RTree.algs = oldalgs
 
     def rearrage_all2(self):
-        entries = self.all_entries()
-        entries = sorted(entries, key=lambda e: e.ref, reverse=True)
-        for i,entry in enumerate(entries):
-            pass
+
+        def get_leaf_parent(node=None):
+            if node is None:node = self.root
+            if node is None or node.isLeaf() or len(node.children)<=0: return []
+            if node.children[0].isLeaf():
+                return node
+            ns = []
+            for cnode in node.children:
+                ns += get_leaf_parent(cnode)
+            return ns
+
+        parents = get_leaf_parent(None)
+        if len(parents)==0:return
+        parents = sorted(parents,key=lambda p:p.mbr)
 
 
     def rearrage_all(self):
