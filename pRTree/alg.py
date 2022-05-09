@@ -210,7 +210,7 @@ def _groupby(tree,mbrs,mode='overlop_area'):
     :param mode str 分组方式 'area' 最小面积 'overlop'最小重叠面积 'overlop_area' 先最小重叠面积，多个再用最小面积
     :return (mbr, d, i, area, overlop, g1, g2) 最优分组 g1和g2是分组的索引
     """
-    plans, min_overlop,min_area = [], 0
+    plans, min_overlop,min_area = [], 0,0
     for mbr in mbrs:
         for d in range(mbr.dimension):
             bound = mbr.boundary(d)
@@ -220,8 +220,8 @@ def _groupby(tree,mbrs,mode='overlop_area'):
                 g2 = list(set(mbrs) - set(g1))
                 if len(g1)<=0 or len(g2)<=0:
                     continue
-                mbr1 = geo.Rectangle.unions([g.mbr for g in g1])
-                mbr2 = geo.Rectangle.unions([g.mbr for g in g2])
+                mbr1 = geo.Rectangle.unions([g for g in g1])
+                mbr2 = geo.Rectangle.unions([g for g in g2])
                 area = mbr1.volume()+mbr2.volume()
                 overlop = mbr1.overlop(mbr2).volume()
                 if len(plans) <= 0:
@@ -241,11 +241,9 @@ def _groupby(tree,mbrs,mode='overlop_area'):
             _, _, _, area, _, _, _ = p
             if minarea == 0 or minarea > area:
                 minarea, optima = area, p
+    mbr, d, i, area, overlop, g1, g2 = optima
+    return (mbr, d, i, area, overlop,[mbrs.index(m) for m in g1],[mbrs.index(m) for m in g2])
 
-    optima[5] = [mbrs.inex(m) for m in g1]
-    optima[6] = [mbrs.inex(m) for m in g2]
-
-    return optima
 
 def split_node_rstar(tree,node):
     '''
