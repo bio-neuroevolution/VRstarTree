@@ -143,6 +143,40 @@ def merge_nodes_ref(tree,nodes):
         return parent.children
 
 
+def merge_nodes_rstar_combinations(tree, nodes):
+    '''
+    根据引用计数合并节点
+    '''
+    if nodes is None or len(nodes) <= 0: return nodes
+    ## 还不需要合并
+    if len(nodes) <= tree.context.max_children_num:
+        return nodes
+
+    plan, minarea = None, 0
+    for n in range(len(nodes) - 1):
+        groups = Collections.combinations(nodes, n + 1)
+        for group in groups:
+            g1 = group
+            g2 = list(set(nodes) - set(g1))
+
+            m1 = geo.Rectangle.unions([g.mbr for g in g1])
+            m2 = geo.Rectangle.unions([g.mbr for g in g2])
+            area = m1.volume() + m2.volume()
+            if plan is None or minarea > area:
+                plans = (g1, g2, m1, m2, minarea)
+                minarea = area
+
+    parent = nodes[0].parent
+    parent.children = []
+    p1 = RNode(parent=nodes[0].parent, children=g1, entries=[])
+    p2 = RNode(parent=nodes[0].parent, children=g2, entries=[])
+    parent._update_mbr()
+
+    # if parent.parent is not None:
+    #    if len(parent.parent.children) > tree.context.max_children_num:
+    #        return merge_nodes_rstar(tree, parent.parent.children)
+    # else:
+    return parent.children
 
 def merge_nodes_rstar(tree,nodes):
     '''
@@ -153,32 +187,65 @@ def merge_nodes_rstar(tree,nodes):
     if len(nodes)<=tree.context.max_children_num:
         return nodes
 
-    plan,minarea = None,0
-    for n in range(len(nodes)-1):
-        groups = Collections.combinations(nodes,n+1)
-        for group in groups:
-            g1 = group
-            g2 = list(set(nodes)-set(g1))
+    optima = _groupby(tree,[node.mbr for node in nodes],'area')
+    if optima is None:
+        return nodes
 
-            m1 = geo.Rectangle.unions([g.mbr for g in g1])
-            m2 = geo.Rectangle.unions([g.mbr for g in g2])
-            area = m1.volume()+m2.volume()
-            if plan is None or minarea > area:
-                plans = (g1,g2,m1,m2,minarea)
-                minarea = area
+    g1 = [nodes[g] for g in optima[5]]
+    g2 = [nodes[g] for g in optima[6]]
 
     parent = nodes[0].parent
     parent.children = []
     p1 = RNode(parent=nodes[0].parent,children=g1,entries=[])
     p2 = RNode(parent=nodes[0].parent,children=g2,entries=[])
     parent._update_mbr()
-    
-    #if parent.parent is not None:
-    #    if len(parent.parent.children) > tree.context.max_children_num:
-    #        return merge_nodes_rstar(tree, parent.parent.children)
-    #else:
+
     return parent.children
 
+def _groupby(tree,mbrs,mode='overlop_area'):
+    """
+    将mbrs分成两组
+    :param tree RTree
+    :param mbrs list[Rectangle]
+    :param mode str 分组方式 'area' 最小面积 'overlop'最小重叠面积 'overlop_area' 先最小重叠面积，多个再用最小面积
+    :return (mbr, d, i, area, overlop, g1, g2) 最优分组 g1和g2是分组的索引
+    """
+    plans, min_overlop,min_area = [], 0
+    for mbr in mbrs:
+        for d in range(mbr.dimension):
+            bound = mbr.boundary(d)
+            for i in range(2):
+                g1 = [m for m in mbrs if m.rela_corss(d,bound[i])==0 and m != mbr]
+                if i == 1: g1.append(mbr)
+                g2 = list(set(mbrs) - set(g1))
+                if len(g1)<=0 or len(g2)<=0:
+                    continue
+                mbr1 = geo.Rectangle.unions([g.mbr for g in g1])
+                mbr2 = geo.Rectangle.unions([g.mbr for g in g2])
+                area = mbr1.volume()+mbr2.volume()
+                overlop = mbr1.overlop(mbr2).volume()
+                if len(plans) <= 0:
+                    plans.append((mbr, d, i, area, overlop, g1, g2))
+                    min_overlop,min_area = overlop,area
+                elif (mode == 'overlop' or mode=='overlop_area') and abs(min_overlop - overlop)<=0:
+                    plans.append((mbr, d, i, area, overlop, g1, g2))
+                    min_overlop, min_area = overlop, area
+                elif mode == 'area' and abs(min_area - area)<=0:
+                    plans.append((mbr, d, i, area, overlop, g1, g2))
+                    min_overlop, min_area = overlop, area
+    optima,min_area = None,0
+    if len(plans)==1 or mode != 'overlop_area':
+        optima = plans[0]
+    else:
+        for p in plans:
+            _, _, _, area, _, _, _ = p
+            if minarea == 0 or minarea > area:
+                minarea, optima = area, p
+
+    optima[5] = [mbrs.inex(m) for m in g1]
+    optima[6] = [mbrs.inex(m) for m in g2]
+
+    return optima
 
 def split_node_rstar(tree,node):
     '''
@@ -193,7 +260,7 @@ def split_node_rstar(tree,node):
         for d in range(entry.mbr.dimension):
             bound = entry.mbr.boundary(d)
             for i in range(2):
-                g1 = [e for e in node.entries if e.mbr.rela_corss(d,bound[i])==0 and e != d]
+                g1 = [e for e in node.entries if e.mbr.rela_corss(d,bound[i])==0 and e != entry]
                 if i == 1: g1.append(entry)
                 g2 = list(set(node.entries) - set(g1))
                 if len(g1)<=0 or len(g2)<=0:

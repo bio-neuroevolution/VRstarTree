@@ -42,6 +42,7 @@ class Rectangle(Geometry):
         if self.values is None: self.values = []
     def clone(self):
         return Rectangle(self.dimension,copy.copy(self.values))
+
     def update(self,dimension,lower,upper):
         if len(self.values)<2*(dimension+1):
             self.values = self.values + [0]*((dimension+1)*2-len(self.values))
