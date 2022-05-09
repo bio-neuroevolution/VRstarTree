@@ -107,40 +107,7 @@ def select_nodes_level(tree,entry,nodes):
         am = np.argmin(areas)
         return nodes[am]
 
-def merge_nodes_ref(tree,nodes):
-    '''
-    根据引用计数合并节点
-    '''
-    if nodes is None or len(nodes)<=0:return nodes
-    ## 还不需要合并
-    if len(nodes)<=tree.context.max_children_num:
-        return nodes
-    ## 按照引用次数从大到小排序
-    nodes = sorted(nodes,key=lambda n: n.ref,reverse=True)
 
-    areas,overlops = [],[]
-    for i in range(len(nodes)-1):
-        m1 = geo.EMPTY_RECT
-        for node in nodes[:i+1]:
-            m1 = m1.union(node.mbr)
-        m2 = geo.EMPTY_RECT
-        for node in nodes[i+1:]:
-            m2 = m2.union(node.mbr)
-        areas.append(m1.volume()+m2.volume())
-        #overlops.append(m1.intersection(m2).volumes())
-    index = np.argmin(areas)
-
-    parent = nodes[0].parent
-    parent.children = []
-    p1 = RNode(parent=nodes[0].parent,children=nodes[:i+1],entries=[])
-    p2 = RNode(parent=nodes[0].parent,children=nodes[i+1:],entries=[])
-    parent._update_mbr()
-
-    if parent.parent is not None:
-        if len(parent.parent.children) > tree.context.max_children_num:
-            return merge_nodes_ref(tree, parent.parent.children)
-    else:
-        return parent.children
 
 
 def merge_nodes_rstar_combinations(tree, nodes):
@@ -178,29 +145,7 @@ def merge_nodes_rstar_combinations(tree, nodes):
     # else:
     return parent.children
 
-def merge_nodes_rstar(tree,nodes):
-    '''
-    根据引用计数合并节点
-    '''
-    if nodes is None or len(nodes)<=0:return nodes
-    ## 还不需要合并
-    if len(nodes)<=tree.context.max_children_num:
-        return nodes
 
-    optima = _groupby(tree,[node.mbr for node in nodes],'area')
-    if optima is None:
-        return nodes
-
-    g1 = [nodes[g] for g in optima[5]]
-    g2 = [nodes[g] for g in optima[6]]
-
-    parent = nodes[0].parent
-    parent.children = []
-    p1 = RNode(parent=nodes[0].parent,children=g1,entries=[])
-    p2 = RNode(parent=nodes[0].parent,children=g2,entries=[])
-    parent._update_mbr()
-
-    return parent.children
 
 def _groupby(tree,mbrs,mode='overlop_area'):
     """
@@ -239,8 +184,8 @@ def _groupby(tree,mbrs,mode='overlop_area'):
     else:
         for p in plans:
             _, _, _, area, _, _, _ = p
-            if minarea == 0 or minarea > area:
-                minarea, optima = area, p
+            if min_area == 0 or min_area > area:
+                min_area, optima = area, p
     mbr, d, i, area, overlop, g1, g2 = optima
     return (mbr, d, i, area, overlop,[mbrs.index(m) for m in g1],[mbrs.index(m) for m in g2])
 
@@ -253,34 +198,16 @@ def split_node_rstar(tree,node):
     '''
     if len(node.entries)<=0:return [node]
     # 对每个数据对象的，每个轴，两个边界上分别尝试分裂，保留重叠面积较小的方案，然后选择其中总面积最小的方案
-    plans,min_overlop = [],0
-    for entry in node.entries:
-        for d in range(entry.mbr.dimension):
-            bound = entry.mbr.boundary(d)
-            for i in range(2):
-                g1 = [e for e in node.entries if e.mbr.rela_corss(d,bound[i])==0 and e != entry]
-                if i == 1: g1.append(entry)
-                g2 = list(set(node.entries) - set(g1))
-                if len(g1)<=0 or len(g2)<=0:
-                    continue
-                mbr1 = geo.Rectangle.unions([g.mbr for g in g1])
-                mbr2 = geo.Rectangle.unions([g.mbr for g in g2])
-                area = mbr1.volume()+mbr2.volume()
-                overlop = mbr1.overlop(mbr2).volume()
-                if len(plans)<=0 or abs(min_overlop - overlop)<=0:
-                    plans.append((entry,d,i,area,overlop,g1,g2))
-                    min_overlop = overlop
-    minarea,optima = 0,None
-    for p in plans:
-        _,_,_,area,_,_,_ = p
-        if minarea == 0 or minarea > area:
-            minarea,optima = area,p
+    optima = _groupby(tree,[e.mbr for e in node.entries],mode='overlop_area')
+    mbr, d, i, area, overlop, g1, g2 = optima
+    g1 = [node.entries[g] for g in g1]
+    g2 = [node.entries[g] for g in g2]
 
-    entry,dimension,bound,area,overlop,g1,g2 = optima
     if node.parent is None:
         tree.root = RNode()
         tree.root.children = [RNode(parent=tree.root,children=[],entries=g1),RNode(parent=tree.root,children=[],entries=g2)]
         tree.root._update_mbr()
+        tree.depth += 1
         return tree.root.children
     else:
         node.parent.children = list(set(node.parent.children) - set([node]))
@@ -288,7 +215,41 @@ def split_node_rstar(tree,node):
         n1 = RNode(parent=parent,children=[],entries=g1)
         n2 = RNode(parent=parent,children=[],entries=g2)
         parent._update_mbr()
+        if len(parent.children) > tree.context.max_children_num:
+            merge_nodes_rstar(tree, parent.children)
         return parent.children
+
+def merge_nodes_rstar(tree,nodes):
+    '''
+    根据引用计数合并节点
+    '''
+    if nodes is None or len(nodes)<=0:return nodes
+    ## 还不需要合并
+    if len(nodes)<=tree.context.max_children_num:
+        return nodes
+
+    optima = _groupby(tree,[node.mbr for node in nodes],'area')
+    mbr, d, i, area, overlop, g1, g2 = optima
+
+
+    g1 = [nodes[g] for g in g1]
+    g2 = [nodes[g] for g in g2]
+
+    parent = nodes[0].parent
+    if parent.parent is None:
+        tree.root = RNode()
+        tree.depth += 1
+        p1 = RNode(parent=tree.root, children=g1, entries=[])
+        p2 = RNode(parent=tree.root, children=g2, entries=[])
+    else:
+        parent.parent.children = list(set(parent.parent.children) - set([parent]))
+        p1 = RNode(parent=parent.parent, children=g1, entries=[])
+        p2 = RNode(parent=parent.parent, children=g2, entries=[])
+        parent._update_mbr()
+        if len(parent.parent.children) > tree.context.max_children_num:
+            merge_nodes_rstar(tree,parent.parent.children)
+
+    return parent.children
 
 def split_node_ref(tree,node):
     '''
@@ -333,18 +294,58 @@ def split_node_ref(tree,node):
 
     if node.parent is None:
         tree.root = RNode()
+        tree.depth += 1
         tree.root.children = [RNode(parent=tree.root,children=[],entries=g1),RNode(parent=tree.root,children=[],entries=g2)]
+        tree.root._update_mbr()
         return tree.root.children
     else:
         node.parent.children = list(set(node.parent.children) - set([node]))
         parent,node.parent = node.parent,None
         n1 = RNode(parent=parent,children=[],entries=g1)
         n2 = RNode(parent=parent,children=[],entries=g2)
+        parent._update_mbr()
+        if len(parent.children) > tree.context.max_children_num:
+            merge_nodes_ref(tree, parent.children)
         return parent.children
 
 
+def merge_nodes_ref(tree,nodes):
+    '''
+    根据引用计数合并节点
+    '''
+    if nodes is None or len(nodes)<=0:return nodes
+    ## 还不需要合并
+    if len(nodes)<=tree.context.max_children_num:
+        return nodes
+    ## 按照引用次数从大到小排序
+    nodes = sorted(nodes,key=lambda n: n.ref,reverse=True)
 
+    areas,overlops = [],[]
+    for i in range(len(nodes)-1):
+        m1 = geo.EMPTY_RECT
+        for node in nodes[:i+1]:
+            m1 = m1.union(node.mbr)
+        m2 = geo.EMPTY_RECT
+        for node in nodes[i+1:]:
+            m2 = m2.union(node.mbr)
+        areas.append(m1.volume()+m2.volume())
+        #overlops.append(m1.intersection(m2).volumes())
+    index = np.argmin(areas)
+    g1,g2 = nodes[:i+1],nodes[i+1:]
 
+    parent = nodes[0].parent
+    if parent.parent is None:
+        tree.root = RNode()
+        tree.depth += 1
+        p1 = RNode(parent=tree.root, children=g1, entries=[])
+        p2 = RNode(parent=tree.root, children=g2, entries=[])
+    else:
+        parent.parent.children = list(set(parent.parent.children) - set([parent]))
+        p1 = RNode(parent=parent.parent, children=g1, entries=[])
+        p2 = RNode(parent=parent.parent, children=g2, entries=[])
+        parent._update_mbr()
+        if len(parent.parent.children) > tree.context.max_children_num:
+            merge_nodes_ref(tree, parent.parent.children)
 
 
 

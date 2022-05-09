@@ -56,7 +56,7 @@ def query_transaction(context,blocksizes,content='all',region_params={}):
             logging.info("VRTree创建区块...")
             # 创建区块链
             chain  = BlockChain(context,blocksize,transactions=transactions)
-            logging.info("VRTree创建区块完成，交易VR*-tree节点数" + str(chain.tran_nodecount()))
+            logging.info("VRTree创建区块完成，交易VR*-tree节点总数=" + str(chain.tran_nodecount()) + ",平均="+str(chain.tran_nodecount()/len(chain.blocks))+",深度="+str(chain.header.trantrieRoot.depth()))
 
             # 执行查询
             begin = time.time()
@@ -69,7 +69,9 @@ def query_transaction(context,blocksizes,content='all',region_params={}):
         if content == 'all' or content.__contains__('optima'):
             # 根据查询优化
             chain.optima()
-            logging.info("VRTree区块优化完成，交易VR*-tree节点数" + str(chain.tran_nodecount()))
+            logging.info("VRTree区块优化完成，交易VR*-tree节点总数=" + str(chain.tran_nodecount()) + ",平均=" + str(
+                chain.tran_nodecount() / len(chain.blocks)) + ",深度=" + str(chain.header.trantrieRoot.depth()))
+
 
             # 第二次交易查询
             begin = time.time()

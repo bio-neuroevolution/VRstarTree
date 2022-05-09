@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import math
 import queue
-from sklearn.cluster import DBSCAN
+
 
 import alg
 import geo
@@ -35,7 +35,7 @@ class RTree:
         if self.range is None:
             self.range = geo.EMPTY_RECT
         self.query_node_count = 0
-        self._levels = {}
+        self.depth = 0
 
     def serialize(self):
         return {'range':str(self.range),'root':RNode.serialize(self.root)}
@@ -55,6 +55,7 @@ class RTree:
            self._count(cnode,value)
         return value[0]
 
+
     def insert(self,entry:Entry):
         '''
         插入数据
@@ -63,7 +64,7 @@ class RTree:
         self.range = entry.mbr if self.range.empty() else entry.mbr.union(self.range)
         if self.root is None:
             self.root = RNode(entry.mbr, parent=None, children=[], entries=[entry])
-            self._levels[1] = [self.root]
+            self.depth = 1
             return
         self._insert(entry,self.root)
 
@@ -77,8 +78,6 @@ class RTree:
         node.addEntries(entry)
         if len(node.entries) > self.context.max_entries_num:
             cnodes = self._doSplit(node)
-            if len(cnodes) > self.context.max_children_num:
-                self._doMerge(cnodes)
 
     def _insert2(self,entry,nodes:list):
         '''
@@ -133,8 +132,8 @@ class RTree:
                     results += rs
             else:
                 for cnode in node.children:
-                    self.query_node_count += 1
                     if not cnode.mbr.isOverlop(mbr):continue
+                    self.query_node_count += 1
                     cnode.ref += 1
                     q.put_nowait(cnode)
 
@@ -256,9 +255,6 @@ class RTree:
             self.insert(entry)
 
         RTree.algs = oldalgs
-
-
-
 
     def view(self,path,filename):
         g = Digraph('g', filename='rtree.gv', node_attr={'shape': 'record', 'height': '.1'})
