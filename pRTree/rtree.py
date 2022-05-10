@@ -8,6 +8,7 @@ import geo
 from geo import Rectangle
 from node import Entry, RNode
 from utils import Configuration
+from utils import Collections
 from graphviz import Digraph, nohtml
 
 
@@ -113,7 +114,7 @@ class RTree:
 
 
 
-    def find(self, mbr: Rectangle):
+    def find2(self, mbr: Rectangle):
         self.query_node_count = 0
         if not self.root.mbr.isOverlop(mbr): return []
         q = queue.SimpleQueue()
@@ -141,7 +142,7 @@ class RTree:
         return results
 
 
-    def find2(self,mbr:Rectangle,node:RNode=None):
+    def find(self,mbr:Rectangle,node:RNode=None):
         if mbr is None or mbr.empty():
             return []
         if self.root is None:return []
@@ -235,24 +236,84 @@ class RTree:
                     self._doMerge(node.children)
         RTree.algs = oldalgs
 
-    def rearrage_all2(self):
+    def rearrage_nodes(self,nodes,results=[]):
+        mbrs = [n.mbr for n in nodes]
+        plans, maxcov, minarea, minoverlop = [], 0,0,0
+        for i, node in enumerate(nodes):
+            for d in range(node.mbr.dimension):
+                b = node.mbr.boundary(d)
+                for j in range(2):
+                    g1, g2 = Rectangle.split(mbrs,d, b[j])
+                    if len(g1)<=0 or len(g2)<=0:continue
+                    g1, g2 = [nodes[g] for g in g1], [nodes[g] for g in g2]
+                    mbr1, mbr2 = Rectangle.unions([g.mbr for g in g1]), Rectangle.unions([g.mbr for g in g2])
+                    overlop = mbr1.overlop(mbr2).volume()
+                    area = mbr1.volume()+mbr2.volume()
+                    plans.append(dict(g=[g1, g2], node=node, d=d, pos=j,overlop=overlop, area=area))
 
-        def get_leaf_parent(node=None):
-            if node is None:node = self.root
-            if node is None or node.isLeaf() or len(node.children)<=0: return []
-            if node.children[0].isLeaf():
-                return node
-            ns = []
-            for cnode in node.children:
-                ns += get_leaf_parent(cnode)
-            return ns
+        plans = sorted(plans, key=lambda p: p['area'])
+        minarea = plans[0]['area']
+        plans = [p for p in plans if abs(p['area']-minarea)<=0]
+        plans = sorted(plans,key=lambda p:p['overlop'])
+        optima = plans[0]
+        for i in range(2):
+            g = optima['g'][i]
+            if len(g)<=self.context.max_children_num:
+                results.append(g)
+            else:
+                self.rearrage_nodes(g,results)
 
-        parents = get_leaf_parent(None)
-        if len(parents)==0:return
-        parents = sorted(parents,key=lambda p:p.mbr)
+    def rearrage_leafs(self,entries,leafs):
+        """
+        根据数据对象重新安排所有的叶子节点
+        """
+        if len(entries) == 0: return []
 
+        plans, maxcov, minarea, minoverlop = [], 0,0,0
+        mbrs = [e.mbr for e in entries]
+        for i, entry in enumerate(entries):
+            for d in range(entry.mbr.dimension):
+                b = entry.mbr.boundary(d)
+                for j in range(2):
+                    if j == 1 and b[0] == b[1]:break
+                    g1, g2 = Rectangle.split(mbrs,d, b[j])
+                    if len(g1)<=0 or len(g2)<=0:continue
+                    g1, g2 = [entries[g] for g in g1],[entries[g] for g in g2]
+                    mbr1, mbr2 = Rectangle.unions([g.mbr for g in g1]), Rectangle.unions([g.mbr for g in g2])
+                    cov = Collections.group_cov([g.ref for g in g1], [g.ref for g in g2])
+                    if len(plans) == 0 or cov >= maxcov:
+                        maxcov = cov
+                        plans.append(dict(g=[g1, g2], cov=cov, entry=entry, d=d, pos=j,
+                                          overlop=mbr1.overlop(mbr2).volume(), area=mbr1.volume() + mbr2.volume()))
+        plans = sorted(plans, key=lambda p: p['overlop'])
+        optima = plans[0]
+        for i in range(2):
+            if len(optima['g'][i]) <= self.context.max_entries_num:
+                leafs.append(RNode(mbr=None,parent=None, children=[], entries=optima['g'][i]))
+            else:
+                self.rearrage_leafs(optima['g'][i],leafs)
+        return leafs
 
     def rearrage_all(self):
+        entries = self.all_entries()
+        nodes = []
+        self.rearrage_leafs(entries,nodes)
+        results = []
+        while True:
+            self.rearrage_nodes(nodes,results)
+            parents = [RNode(mbr=None,parent=None,children=r,entries=[]) for r in results]
+            if len(parents)<=self.context.max_children_num:
+                self.root = RNode(mbr=None,parent=None,children=parents,entries=[])
+                return
+            results,nodes = [],parents
+
+
+
+
+
+
+
+    def rearrage_all2(self):
         entries = self.all_entries()
         oldalgs = RTree.algs.copy()
         RTree.algs['merge_nodes'] = alg.merge_nodes_ref

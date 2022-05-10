@@ -1,5 +1,6 @@
 
 import copy
+import numpy as np
 
 class Geometry:
     DIM_EXTENSIBLE = True
@@ -130,6 +131,73 @@ class Rectangle(Geometry):
             upper = min(self.upper(i), r.upper(i))
             if lower > upper: return False
         return True
+
+    @classmethod
+    def split(cls,mbrs,dimension,value):
+        """
+        将mbrs所有矩形在特定维度上按照value分成两组
+        :param mbrs list[Rectangle]
+        :param dimension int
+        :param value float
+        :return (list[int],list[int])
+        """
+        g1,g2 = [],[]
+        for index,mbr in enumerate(mbrs):
+            b = mbr.boundary(dimension)
+            if b[1]<=value: g1.append(index)
+            elif b[0] >= value: g2.append(index)
+            elif abs(b[0]-value) >= abs(b[1]-value):
+                g1.append(index)
+            else:
+                g2.append(index)
+        return (g1,g2)
+
+
+    @classmethod
+    def groupby(cls,tree, mbrs, mode='overlop_area'):
+        """
+        将mbrs分成两组
+        :param tree RTree
+        :param mbrs list[Rectangle]
+        :param mode str 分组方式 'area' 最小面积 'overlop'最小重叠面积 'overlop_area' 先最小重叠面积，多个再用最小面积
+        :return (mbr, d, i, area, overlop, g1, g2) 最优分组 g1和g2是分组的索引
+        """
+        plans, min_overlop, min_area = [], 0, 0
+        for mbr in mbrs:
+            for d in range(mbr.dimension):
+                bound = mbr.boundary(d)
+                for i in range(2):
+                    g1 = [m for m in mbrs if m.rela_corss(d, bound[i]) == 0 and m != mbr]
+                    if i == 1: g1.append(mbr)
+                    g2 = list(set(mbrs) - set(g1))
+                    if len(g1) <= 0 or len(g2) <= 0:
+                        continue
+                    mbr1 = Rectangle.unions([g for g in g1])
+                    mbr2 = Rectangle.unions([g for g in g2])
+                    area = mbr1.volume() + mbr2.volume()
+                    overlop = mbr1.overlop(mbr2).volume()
+                    plans.append(dict(mbr=mbr,dimension=d,index=i,area=area,overlop=overlop,g=[g1,g2]))
+
+        optima, min_area = None, 0
+        if mode == 'overlop':
+            index = np.argmin([p['overlop'] for p in plans])
+            optima = plans[index]
+        elif mode == 'area':
+            index = np.argmin([p['area'] for p in plans])
+            optima = plans[index]
+        elif mode == 'overlop_area':
+            index = np.argmin([p['overlop'] for p in plans])
+            min_overlop = plans[index]['overlop']
+            plans = [p for p in plans if abs(p['overlop']-min_overlop)<=0]
+            index = np.argmin([p['area'] for p in plans])
+            optima = plans[index]
+        else:
+            optima = plans[0]
+
+        mbr = mbr, dimension = d, index = i, area = area, overlop = overlop, g = [g1, g2]
+
+        mbr, d, i, area, overlop, g1, g2 = optima['mbr'],optima['dimension'],optima['index'],optima['area'],optima['overlop'],optima['g'][0],optima['g'][1]
+        return (mbr, d, i, area, overlop, [mbrs.index(m) for m in g1], [mbrs.index(m) for m in g2])
 
 EMPTY_RECT = Rectangle()
 

@@ -134,6 +134,19 @@ class Collections:
             ans.append(each_list)
         return ans
 
+    @classmethod
+    def group_cov(cls,g1,g2):
+        """
+        计算组间方差
+        :param g1 list[float]
+        :param g2 list[float]
+        :
+        """
+        avg,avg1,avg2 = np.average(g1+g2),np.average(g1),np.average(g2)
+        return (len(g1)*(avg-avg1)**2 + len(g2)*(avg-avg2)**2)/(len(g1)+len(g2))
+
+
+
 
 
 

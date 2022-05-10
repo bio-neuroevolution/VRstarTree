@@ -147,47 +147,7 @@ def merge_nodes_rstar_combinations(tree, nodes):
 
 
 
-def _groupby(tree,mbrs,mode='overlop_area'):
-    """
-    将mbrs分成两组
-    :param tree RTree
-    :param mbrs list[Rectangle]
-    :param mode str 分组方式 'area' 最小面积 'overlop'最小重叠面积 'overlop_area' 先最小重叠面积，多个再用最小面积
-    :return (mbr, d, i, area, overlop, g1, g2) 最优分组 g1和g2是分组的索引
-    """
-    plans, min_overlop,min_area = [], 0,0
-    for mbr in mbrs:
-        for d in range(mbr.dimension):
-            bound = mbr.boundary(d)
-            for i in range(2):
-                g1 = [m for m in mbrs if m.rela_corss(d,bound[i])==0 and m != mbr]
-                if i == 1: g1.append(mbr)
-                g2 = list(set(mbrs) - set(g1))
-                if len(g1)<=0 or len(g2)<=0:
-                    continue
-                mbr1 = geo.Rectangle.unions([g for g in g1])
-                mbr2 = geo.Rectangle.unions([g for g in g2])
-                area = mbr1.volume()+mbr2.volume()
-                overlop = mbr1.overlop(mbr2).volume()
-                if len(plans) <= 0:
-                    plans.append((mbr, d, i, area, overlop, g1, g2))
-                    min_overlop,min_area = overlop,area
-                elif (mode == 'overlop' or mode=='overlop_area') and abs(min_overlop - overlop)<=0:
-                    plans.append((mbr, d, i, area, overlop, g1, g2))
-                    min_overlop, min_area = overlop, area
-                elif mode == 'area' and abs(min_area - area)<=0:
-                    plans.append((mbr, d, i, area, overlop, g1, g2))
-                    min_overlop, min_area = overlop, area
-    optima,min_area = None,0
-    if len(plans)==1 or mode != 'overlop_area':
-        optima = plans[0]
-    else:
-        for p in plans:
-            _, _, _, area, _, _, _ = p
-            if min_area == 0 or min_area > area:
-                min_area, optima = area, p
-    mbr, d, i, area, overlop, g1, g2 = optima
-    return (mbr, d, i, area, overlop,[mbrs.index(m) for m in g1],[mbrs.index(m) for m in g2])
+
 
 
 def split_node_rstar(tree,node):
@@ -198,7 +158,7 @@ def split_node_rstar(tree,node):
     '''
     if len(node.entries)<=0:return [node]
     # 对每个数据对象的，每个轴，两个边界上分别尝试分裂，保留重叠面积较小的方案，然后选择其中总面积最小的方案
-    optima = _groupby(tree,[e.mbr for e in node.entries],mode='overlop_area')
+    optima = geo.Rectangle.groupby(tree,[e.mbr for e in node.entries],mode='overlop_area')
     mbr, d, i, area, overlop, g1, g2 = optima
     g1 = [node.entries[g] for g in g1]
     g2 = [node.entries[g] for g in g2]
@@ -228,7 +188,7 @@ def merge_nodes_rstar(tree,nodes):
     if len(nodes)<=tree.context.max_children_num:
         return nodes
 
-    optima = _groupby(tree,[node.mbr for node in nodes],'area')
+    optima = geo.Rectangle.groupby(tree,[node.mbr for node in nodes],'area')
     mbr, d, i, area, overlop, g1, g2 = optima
 
 
