@@ -156,12 +156,20 @@ def run_query_transaction(context,count=10,blocksizes=None,content='all',region_
 def experiment1():
     context = Configuration(max_children_num=8, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
-    blocksizes = [50, 70, 90, 110, 130, 150, 170, 190, 210,230,250,270,290]
+    blocksizes = [30,50,70,90,110,130,150,170,190,210,230,250]
 
-    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = run_query_transaction(context, count=1,
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = run_query_transaction(context, count=2,
                                                                                        blocksizes=blocksizes,
                                                                                        content='all',
                                                                                        region_params={})
+
+    logging.info("rtreep="+str(rtreep))
+    logging.info("rtreep_nodecount=" + str(rtreep_nodecount))
+    logging.info("rtreea=" + str(rtreea))
+    logging.info("rtreea_nodecount=" + str(rtreea_nodecount))
+    logging.info("kdtree=" + str(kdtree))
+    logging.info("scan=" + str(scan))
+
     plt.figure(1)
     plt.plot(blocksizes, rtreep, color='blue')
     plt.plot(blocksizes, rtreea, color='red')
