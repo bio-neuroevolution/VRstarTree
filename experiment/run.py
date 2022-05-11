@@ -18,7 +18,7 @@ from wise.blockDAG import search_on_blockDAG as sob
 # 读取数据
 logging = LogHandler('run')
 
-def query_transaction(context,blocksizes,content='all',region_params={}):
+def query_transaction(context,blocksizes,content='all',query_param={},region_params={}):
     """
     一次查询实验
     :param conetxt 配置信息
@@ -50,7 +50,8 @@ def query_transaction(context,blocksizes,content='all',region_params={}):
     for i,blocksize in enumerate(blocksizes):
         logging.info("blocksize=" + str(blocksize))
         # 创建查询分布
-        mbrs = BlockChain.create_query(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
+
+        mbrs = BlockChain.create_query(count=query_param['count'], sizes=query_param['sizes'], posrandom=query_param['posrandom'], lengthcenter=query_param['lengthcenter'], lengthscale=query_param['lengthscale'])
 
         if content == 'all' or content.__contains__('rtree'):
             logging.info("VRTree创建区块...")
@@ -126,11 +127,11 @@ def query_transaction(context,blocksizes,content='all',region_params={}):
     #plt.plot(blocksizes, rtreea,color='red')
     #plt.plot(blocksizes,kdtree,color='black')
 
-def run_query_transaction(context,count=10,blocksizes=None,content='all',region_params={}):
+def run_query_transaction(context,count=10,blocksizes=None,content='all',query_param={},region_params={}):
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = [[]] * len(blocksizes), [[]] * len(blocksizes), [
         []] * len(blocksizes), [[]] * len(blocksizes), [[]] * len(blocksizes),[[]] * len(blocksizes)
     for i in range(10):
-        rp, rpnode, ra, ranode, kd,sc = query_transaction(context, blocksizes,content,region_params)
+        rp, rpnode, ra, ranode, kd,sc = query_transaction(context, blocksizes,content,query_param,region_params)
         for j in range(len(blocksizes)):
             rtreep[j] = rtreep[j] + [rp[j]]
             rtreep_nodecount[j] = rtreep_nodecount[j] + [rpnode[j]]
@@ -154,13 +155,20 @@ def run_query_transaction(context,count=10,blocksizes=None,content='all',region_
     return rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree,scan
 
 def experiment1():
+    '''
+    实现Verkle AR*-tree、Verkel R*-tree、Merkle KD-tree，scan-time在不同区块尺寸下的查询性能比较
+     以及Verkle AR*-tree、Verkel R*-tree的访问节点数比较
+    :return:
+    '''
     context = Configuration(max_children_num=8, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
+    query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
     blocksizes = [30,50,70,90,110,130,150,170,190,210,230,250]
 
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = run_query_transaction(context, count=2,
                                                                                        blocksizes=blocksizes,
                                                                                        content='all',
+                                                                                       query_param=query_param,
                                                                                        region_params={})
 
     logging.info("rtreep="+str(rtreep))
@@ -183,8 +191,13 @@ def experiment1():
     plt.legend()
 
 def experiment2():
+    '''
+        实现Verkle AR*-tree、Verkel R*-tree对于非点类型数据查询的性能比较
+        :return:
+        '''
     context = Configuration(max_children_num=32, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
+    query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
     blocksizes = [30, 50, 70, 90, 110, 130, 150, 170, 190]
 
     region_params = {'geotype_probs': [0.5, 0.0, 0.5], 'length_probs': [0.6, 0.3, 0.1],
@@ -192,6 +205,7 @@ def experiment2():
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree = run_query_transaction(context, count=3,
                                                                                        blocksizes=blocksizes,
                                                                                        content='all',
+                                                                                       query_param=query_param,
                                                                                        region_params=region_params)
     plt.figure(3)
     plt.plot(blocksizes, rtreep, color='blue')
@@ -205,7 +219,53 @@ def experiment2():
     plt.legend()
 
 def experiment3():
-    pass
+    '''
+        实现Verkle AR*-tree、Verkel R*-tree在不同查询分布下的比较
+        :return:
+        '''
+    max_children_nums = [2,4,8,16,32,48,64,80,96]
+    blocksizes = [90]
+    itercount = 2
+    rtree_gaussian_time,rtree_gaussian_count,rtree_uniform_time,rtree_uniform_count = [],[],[],[]
+    for i,max_children_num in enumerate(max_children_nums):
+        context = Configuration(max_children_num=max_children_num, max_entries_num=max_children_num, account_length=8, account_count=200,
+                                select_nodes_func='', merge_nodes_func='', split_node_func='')
+        query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
+
+        rtreep1, rtreep_nodecount1, rtreea1, rtreea_nodecount1, _, _ = run_query_transaction(context, count=itercount,
+                                                                                             blocksizes=blocksizes,
+                                                                                             content='rtree,optima',
+                                                                                             query_param=query_param,
+                                                                                             region_params={})
+        rtree_gaussian_time.append(rtreep1[0])
+        rtree_gaussian_count.append(rtreep_nodecount1[0])
+
+
+        query_param = dict(count=200, sizes=[], posrandom=0, lengthcenter=0.05, lengthscale=0)
+        rtreep2, rtreep_nodecount2, rtreea2, rtreea_nodecount2, _, _ = run_query_transaction(context, count=itercount,
+                                                                                             blocksizes=blocksizes,
+                                                                                             content='rtree,optima',
+                                                                                             query_param=query_param,
+                                                                                             region_params={})
+        rtree_uniform_time.append(rtreep2[0])
+        rtree_uniform_count.append(rtreea_nodecount2[0])
+
+
+    logging.info("rtree time(gaussian)=" + str(rtree_gaussian_time))
+    logging.info("rtree count(gaussian)=" + str(rtree_gaussian_count))
+    logging.info("rtree time(uniform)=" + str(rtree_uniform_time))
+    logging.info("rtree count(uniform)=" + str(rtree_uniform_count))
+
+
+    plt.figure(5)
+    plt.plot(max_children_nums, rtree_gaussian_time, color='blue')
+    plt.plot(max_children_nums, rtree_uniform_time, color='red')
+    plt.legend()
+
+    plt.figure(6)
+    plt.plot(max_children_nums, rtree_gaussian_count, color='blue')
+    plt.plot(max_children_nums, rtree_uniform_count, color='red')
+    plt.legend()
 
 
 if __name__ == '__main__':

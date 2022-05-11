@@ -306,6 +306,20 @@ class BlockChain:
         :param lengthcenter float 查询窗口的宽度均值
         :param lengthscale float 查询窗口的宽度方差
         """
+        if lengthscale <=0:
+            # 表示在均匀分布上采样
+            r = []
+            length = lengthcenter
+            for c in range(count):
+                center = [np.random.random() for dimension in range(len(sizes))]
+                mbr = geo.Rectangle(dimension=len(sizes))
+                for j in range(len(sizes)):
+                    mbr.update(j, center[j] - length / 2, center[j] + length / 2)
+                r.append(mbr)
+            return r
+
+
+        # 在多元高斯分布上采样
         ds = []
         for i in range(len(sizes)):
             interval = 1./(sizes[i]+1)
