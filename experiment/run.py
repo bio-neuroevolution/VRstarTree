@@ -10,6 +10,7 @@ from log import LogHandler
 
 from blocks import BTransaction, BlockChain
 from dataloader import PocemonLoader
+from merklePatriciaTree.patricia_tree import MerklePatriciaTree
 from utils import Configuration
 from wise import simulation
 from wise.blockDAG import analysis_utils
@@ -18,6 +19,28 @@ from wise.blockDAG import search_on_blockDAG as sob
 # 读取数据
 logging = LogHandler('run')
 
+def _initdata(context,region_params={}):
+    logging.info("VRTree读取数据...")
+    dataLoader = PocemonLoader()
+    df = dataLoader.refresh()  # 读取数据
+    # df = dataLoader.extend_df(df=df,repeat_times=1)   #扩大数据
+    df = dataLoader.normalize(df)  # 归一化
+    transactions = [BTransaction(row['type'], row['lon'], row['lat'], row['ts'], None) for index, row in df.iterrows()]
+    if len(region_params) > 0:
+        dataLoader.create_region(transactions,
+                                 geotype_probs=region_params['geotype_probs'],
+                                 length_probs=region_params['length_probs'],
+                                 lengthcenters=region_params['lengthcenters'],
+                                 lengthscales=region_params['lengthscales'])
+
+    # 创建和分配账户
+    account_name, account_dis = dataLoader.create_account_name(context.account_count, context.account_length)
+    accs = np.random.choice(account_name, len(transactions))
+    diss = [account_dis[account_name.index(a)] for a in accs]
+    for i, tr in enumerate(transactions):
+        tr.account = accs[i]
+    return transactions
+
 def query_transaction(context,blocksizes,content='all',query_param={},region_params={}):
     """
     一次查询实验
@@ -25,25 +48,8 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
     :param blocksizes 区块大小列表
     :param region_params 生成立方体实验数据参数
     """
-    logging.info("VRTree读取数据...")
-    dataLoader = PocemonLoader()
-    df = dataLoader.refresh()                         #读取数据
-    #df = dataLoader.extend_df(df=df,repeat_times=1)   #扩大数据
-    df = dataLoader.normalize(df)                     #归一化
-    transactions = [BTransaction(row['type'],row['lon'],row['lat'],row['ts'],None) for index,row in df.iterrows()]
-    if len(region_params)>0:
-        dataLoader.create_region(transactions,
-                                 geotype_probs=region_params['geotype_probs'],
-                                 length_probs=region_params['length_probs'],
-                                 lengthcenters=region_params['lengthcenters'],
-                                 lengthscales=region_params['lengthscales'])
-
-    #创建和分配账户
-    account_name,account_dis = dataLoader.create_account_name(context.account_count,context.account_length)
-    accs = np.random.choice(account_name,len(transactions))
-    diss = [account_dis[account_name.index(a)] for a in accs]
-    for i,tr in enumerate(transactions):
-        tr.account = accs[i]
+    # 读取数据
+    transactions = _initdata(context,region_params)
 
 
     rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree,scan = [],[],[],[],[],[]
@@ -179,16 +185,18 @@ def experiment1():
     logging.info("scan=" + str(scan))
 
     plt.figure(1)
-    plt.plot(blocksizes, rtreep, color='blue')
-    plt.plot(blocksizes, rtreea, color='red')
-    plt.plot(blocksizes, kdtree, color='black')
-    plt.plot(blocksizes, scan, color='green')
-    plt.legend()
+    plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
+    plt.plot(blocksizes, rtreea, color='red',label='Verkel AR*tree')
+    plt.plot(blocksizes, kdtree, color='black',label='Merkel KDtree')
+    plt.plot(blocksizes, scan, color='green',label='Scan')
+    plt.legend(loc='best')
+    plt.savefig('expeiment1_time.png')
 
     plt.figure(2)
-    plt.plot(blocksizes, rtreep_nodecount, color='blue')
-    plt.plot(blocksizes, rtreea_nodecount, color='red')
-    plt.legend()
+    plt.plot(blocksizes, rtreep_nodecount, color='blue',label='Verkel R*tree')
+    plt.plot(blocksizes, rtreea_nodecount, color='red',label='Verkel AR*tree')
+    plt.legend(loc='best')
+    plt.savefig('expeiment1_count.png')
 
 def experiment2():
     '''
@@ -208,15 +216,17 @@ def experiment2():
                                                                                        query_param=query_param,
                                                                                        region_params=region_params)
     plt.figure(3)
-    plt.plot(blocksizes, rtreep, color='blue')
-    plt.plot(blocksizes, rtreea, color='red')
-    plt.plot(blocksizes, kdtree, color='black')
-    plt.legend()
+    plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
+    plt.plot(blocksizes, rtreea, color='red',label='Verkel AR*tree')
+    plt.plot(blocksizes, kdtree, color='black',label='Merkel KDtree')
+    plt.legend(loc='best')
+    plt.savefig('experiment2_time.png')
 
     plt.figure(4)
-    plt.plot(blocksizes, rtreep_nodecount, color='blue')
-    plt.plot(blocksizes, rtreea_nodecount, color='red')
-    plt.legend()
+    plt.plot(blocksizes, rtreep_nodecount, color='blue',label='Verkel R*tree')
+    plt.plot(blocksizes, rtreea_nodecount, color='red',label='Verkel AR*tree')
+    plt.legend(loc='best')
+    plt.savefig('experiment2_count.png')
 
 def experiment3():
     '''
@@ -258,14 +268,76 @@ def experiment3():
 
 
     plt.figure(5)
-    plt.plot(max_children_nums, rtree_gaussian_time, color='blue')
-    plt.plot(max_children_nums, rtree_uniform_time, color='red')
-    plt.legend()
+    plt.plot(max_children_nums, rtree_gaussian_time, color='blue',label="Gaussian")
+    plt.plot(max_children_nums, rtree_uniform_time, color='red',label="Uniform")
+    plt.legend(loc='best')
+    plt.savefig('experiment3_time.png')
 
     plt.figure(6)
-    plt.plot(max_children_nums, rtree_gaussian_count, color='blue')
-    plt.plot(max_children_nums, rtree_uniform_count, color='red')
-    plt.legend()
+    plt.plot(max_children_nums, rtree_gaussian_count, color='blue',label="Gaussian")
+    plt.plot(max_children_nums, rtree_uniform_count, color='red',label="Uniform")
+    plt.legend(loc="best")
+    plt.savefig('experiment3_count.png')
+
+def experiment4():
+    """
+    比较MPT树和Verkle树，Merkle KD-Tree和两个Verkle AR*-tree树的证明长度
+    """
+    context = Configuration(max_children_num=8, max_entries_num=8, account_length=8, account_count=200,
+                            select_nodes_func='', merge_nodes_func='', split_node_func='')
+    query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
+    blocksizes = [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250]
+    account_lengths,tran_lengths,traj_lengths,block_dag_lengths,mpt_lengths = [],[],[],[],[]
+
+    proof_length_unit ,proof_sample_count= 64,10
+    # 读取数据
+    transactions = _initdata(context, {})
+
+    for i,blocksize in enumerate(blocksizes):
+        # 创建区块链
+        logging.info('创建BlockChain...')
+        chain = BlockChain(context, blocksize, transactions=transactions)
+        # 计算叶节点的证明长度
+        account_length,tran_length,traj_length = chain.proof_length(count=proof_sample_count,unit=proof_length_unit)
+
+        logging.info('创建BlockDAG...')
+        settings = dict(repeat_times=1, tr=60, D=3, bs=blocksize, alpha=10)
+        block_dag = simulation.GeneratorDAGchain.generate(**settings)
+        block_dag_length = block_dag.proof_length(proof_length_unit)
+
+        logging.info('创建MPT...')
+        dataLoader = PocemonLoader()
+        account_names, _ = dataLoader.create_account_name(blocksize, context.account_length)
+        mpt = MerklePatriciaTree()
+
+        for name in account_names:
+            mpt.insert(name)
+        mpt_length = mpt.proof_length(count=proof_sample_count,unit=proof_length_unit)
+
+        account_lengths.append(account_length)
+        tran_lengths.append(tran_length)
+        traj_lengths.append(tran_length)
+        block_dag_lengths.append(block_dag_length)
+        mpt_lengths.append(mpt_length)
+
+    logging.info('实验四结果：')
+    logging.info(blocksizes)
+    logging.info(account_lengths)
+    logging.info(tran_lengths)
+    logging.info(traj_lengths)
+    logging.info(block_dag_lengths)
+    logging.info(mpt_lengths)
+    plt.figure(7)
+    plt.plot(blocksizes, account_lengths,label="Account")
+    plt.plot(blocksizes, tran_lengths,label="Transaction")
+    plt.plot(blocksizes, traj_lengths,label="Trajectory")
+    plt.plot(blocksizes, block_dag_lengths,label='BlockDAG')
+    plt.plot(blocksizes, mpt_lengths,label='MPT')
+    plt.legend(loc='best')
+    plt.savefig('experiment4_proof.png')
+
+
+
 
 
 if __name__ == '__main__':
