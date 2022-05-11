@@ -115,7 +115,8 @@ class RTree:
 
 
     def find2(self, mbr: Rectangle):
-        if self.root is None or len(self.root)<=0: return []
+        if self.root is None : return []
+        if isinstance(self.root, list) and len(self.root) == 0: return []
         self.query_node_count = 0
         if not self.root.mbr.isOverlop(mbr): return []
         q = queue.SimpleQueue()
@@ -146,7 +147,8 @@ class RTree:
     def find(self,mbr:Rectangle,node:RNode=None):
         if mbr is None or mbr.empty():
             return []
-        if self.root is None or len(self.root)==0:return []
+        if self.root is None: return []
+        if isinstance(self.root,list) and len(self.root)==0:return []
         if node is None:
             self.query_node_count = 0
             return self.find(mbr,self.root)
