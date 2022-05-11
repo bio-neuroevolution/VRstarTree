@@ -201,6 +201,7 @@ def merge_nodes_rstar(tree,nodes):
         tree.depth += 1
         p1 = RNode(parent=tree.root, children=g1, entries=[])
         p2 = RNode(parent=tree.root, children=g2, entries=[])
+        tree.root._update_mbr()
     else:
         parent.parent.children = list(set(parent.parent.children) - set([parent]))
         p1 = RNode(parent=parent.parent, children=g1, entries=[])
