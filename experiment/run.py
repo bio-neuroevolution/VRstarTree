@@ -299,11 +299,14 @@ def experiment4():
         chain = BlockChain(context, blocksize, transactions=transactions)
         # 计算叶节点的证明长度
         account_length,tran_length,traj_length = chain.proof_length(count=proof_sample_count,unit=proof_length_unit)
+        print(str(account_length)+","+str(tran_length)+","+str(traj_length))
 
         logging.info('创建BlockDAG...')
         settings = dict(repeat_times=1, tr=60, D=3, bs=blocksize, alpha=10)
         block_dag = simulation.GeneratorDAGchain.generate(**settings)
         block_dag_length = block_dag.merkle_kd_trees.proof_length(proof_length_unit)
+        print(block_dag_length)
+
 
         logging.info('创建MPT...')
         dataLoader = PocemonLoader()
@@ -313,6 +316,7 @@ def experiment4():
         for name in account_names:
             mpt.insert(name)
         mpt_length = mpt.proof_length(count=proof_sample_count,unit=proof_length_unit)
+        print(mpt_length)
 
         account_lengths.append(account_length)
         tran_lengths.append(tran_length)
