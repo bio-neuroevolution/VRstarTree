@@ -1,3 +1,4 @@
+import numpy as np
 import dumb25519
 import polycommit
 from dumb25519 import Scalar
@@ -17,12 +18,13 @@ class Node:
         '''
         self.parent = None
         self.parentKey = -1
+        self.hash = ''
         self.commitment = 0
         self.poly = 0
         self.scalar = 0
 
     def serialize(self):
-        return {'parentKey':self.parentKey,'commitment':self.commitment,'poly':self.poly,'scalar':self.scalar}
+        return {'parentKey':self.parentKey,'commitment':self.commitment,'poly':self.poly,'scalar':self.scalar,'hash':self.hash}
 
 class LeafNode(Node):
     def __init__(self,keys,values,fullkeys):
@@ -79,6 +81,18 @@ class BranchNode(InternalNode):
         '''
         super(BranchNode, self).__init__()
         self.entries = [-1]*BranchNode.ENTRY_NUM
+
+    def size(self):
+        return len([v for v in self.entries if v is not None and v != -1])
+
+    def index(self, index):
+        xh = 0
+        while self.entries[xh] is not None and self.entries[xh] != -1:
+            if xh == index:
+                return self.entries[xh]
+            xh += 1
+        return ''
+
 
     def serialize(self):
         rs = super().serialize()
@@ -226,6 +240,32 @@ class VerklePatriciaTree:
             nodeNew.parent = nodeOrigin.parent
             nodeNew.parentKey = nodeOrigin.parentKey
 
+    def proof_length(self,count,unit):
+        def _paths(node=None,paths=[]):
+            if node is None:
+                node = self.root
+            if node is None: return
+            if isinstance(node, LeafNode):
+                paths.append(unit)
+                return
+            elif isinstance(node, ExtensionNode):
+                paths.append(unit)
+                node = node.next
+                _paths(node)
+                return
+            elif isinstance(node, BranchNode):
+                paths.append(unit)
+                index = int(np.random.random()*node.size())
+                node = node.index(index)
+                _paths(node)
+        #self._computeCommitment()
+        lengths = []
+        for i in range(count):
+            paths = []
+            _paths(self.root,paths)
+            lengths.append(sum(paths))
+        return np.average(lengths)
+
     def _computeCommitment(self,node=None):
         if node is None:
             node = self.root
@@ -240,7 +280,7 @@ class VerklePatriciaTree:
                 nodehash = [dumb25519.hash_to_scalar('verkle', node.next),dumb25519.hash_to_scalar('verkle', node.value)]
                 node.poly, node.scalar, node.commitment = self._computePoly(nodehash)
         elif isinstance(node,BranchNode):
-            for i in range(node.entries):
+            for i in range(len(node.entries)):
                 if node.entries[i] is None:
                     continue
                 self._computeCommitment(node.entries[i])

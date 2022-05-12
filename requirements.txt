@@ -1,7 +1,13 @@
 cycler==0.11.0
+cytoolz==0.11.2
+eth-hash==0.3.2
+eth-typing==3.0.0
+eth-utils==2.0.0
 fonttools==4.33.3
 graphviz==0.20
+joblib==1.1.0
 kiwisolver==1.4.2
+leveldb==0.201
 matplotlib==3.5.1
 numpy==1.21.6
 packaging==21.3
@@ -11,6 +17,11 @@ Pillow==9.1.0
 pyparsing==3.0.8
 python-dateutil==2.8.2
 pytz==2022.1
+rlp==0.6.0
+scikit-learn==1.0.2
 scipy==1.7.3
 six==1.16.0
+sklearn==0.0
+threadpoolctl==3.1.0
+toolz==0.11.2
 typing_extensions==4.2.0

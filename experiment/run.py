@@ -136,7 +136,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
 def run_query_transaction(context,count=10,blocksizes=None,content='all',query_param={},region_params={}):
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = [[]] * len(blocksizes), [[]] * len(blocksizes), [
         []] * len(blocksizes), [[]] * len(blocksizes), [[]] * len(blocksizes),[[]] * len(blocksizes)
-    for i in range(10):
+    for i in range(count):
         rp, rpnode, ra, ranode, kd,sc = query_transaction(context, blocksizes,content,query_param,region_params)
         for j in range(len(blocksizes)):
             rtreep[j] = rtreep[j] + [rp[j]]
@@ -303,7 +303,7 @@ def experiment4():
         logging.info('创建BlockDAG...')
         settings = dict(repeat_times=1, tr=60, D=3, bs=blocksize, alpha=10)
         block_dag = simulation.GeneratorDAGchain.generate(**settings)
-        block_dag_length = block_dag.proof_length(proof_length_unit)
+        block_dag_length = block_dag.merkle_kd_trees.proof_length(proof_length_unit)
 
         logging.info('创建MPT...')
         dataLoader = PocemonLoader()
@@ -338,9 +338,31 @@ def experiment4():
 
 
 
-
+def fun(matrix : list) -> list:
+    """
+    将图的邻接矩阵转换为边构成的元组列表
+    :param   matrix list[[int]]  邻接矩阵
+    :result  list[tuple] 每个边构成的列表
+    :example
+              matrix = [[0,1,0,0],
+                        [0,0,1,1],
+                        [0,0,0,0],
+                        [0,0,0,0]
+                       ]
+              result = fun(matrix)
+              print(str(result))   #  [('0','1'),('1','2'),('1','3')]
+    """
+    result = []
+    for rowno,row in enumerate(matrix):
+        for colno,col in enumerate(row):
+            if col != 1:
+                continue
+            result.append((str(rowno),str(colno)))
+    return result
 
 if __name__ == '__main__':
-    experiment1()
+    #experiment1()
     #experiment2()
+    #experiment3()
+    experiment4()
 

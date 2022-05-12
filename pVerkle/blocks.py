@@ -152,8 +152,8 @@ class Block:
     def _create_traj_trie(self,transactions):
         mbr = geo.Rectangle(4,[0.,1.,0.,1.,0.,1.,0.,1.])
         tree = VerkleRTree(self.context,mbr)
-        #for tr in transactions:
-        #    tree.insert(BRecord(tr.account,tr.log,tr.lat,tr.ts,self.account_distance(tr.account)))
+        for tr in transactions:
+            tree.insert(BRecord(tr.account,tr.log,tr.lat,tr.ts,self.account_distance(tr.account)))
         return tree
 
     def account_distance(self,s1):
@@ -250,6 +250,10 @@ class BlockChain:
         if parent is None:return self.header
         hash = self.hash(parent)
 
+    def proof_length(self,count,unit):
+        return self.header.statetrieRoot.proof_length(count,unit), \
+               self.header.trantrieRoot.proof_length(count,unit),  \
+               self.header.trajetrieRoot.proof_length(count,unit)
 
     def summary(self):
         print("context:"+str(self.context.serialize()))

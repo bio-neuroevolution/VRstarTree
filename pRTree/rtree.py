@@ -174,7 +174,8 @@ class RTree:
 
         return rs
 
-
+    def proof_length(self, count, unit):
+        return unit*self.depth
 
     def _doSelection(self,entry,nodes):
         #if nodes is None or len(nodes)==0:return None
