@@ -1,5 +1,6 @@
 import time
 from random import random
+import csv
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -152,12 +153,6 @@ def run_query_transaction(context,count=10,blocksizes=None,content='all',query_p
     rtreea_nodecount = [np.average(e) for e in rtreea_nodecount]
     kdtree = [np.average(e) for e in kdtree]
 
-    logging.info("VRTree交易查询消耗（优化前）:" + str(rtreep))
-    logging.info("VRTree交易访问节点数（优化前）:" + str(rtreep_nodecount))
-    logging.info("VRTree交易查询消耗（优化前）:" + str(rtreea))
-    logging.info("VRTree交易访问节点数（优化前）:" + str(rtreea_nodecount))
-    logging.info("BlockDAG交易查询消耗:" + str(kdtree))
-
     return rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree,scan
 
 def experiment1():
@@ -183,6 +178,18 @@ def experiment1():
     logging.info("rtreea_nodecount=" + str(rtreea_nodecount))
     logging.info("kdtree=" + str(kdtree))
     logging.info("scan=" + str(scan))
+
+
+    log_path = 'experiment1.csv'
+    file = open(log_path, 'w', encoding='utf-8', newline='')
+    csv_writer = csv.writer(file)
+    csv_writer.writerow(rtreep)
+    csv_writer.writerow(rtreep_nodecount)
+    csv_writer.writerow(rtreea)
+    csv_writer.writerow(rtreea_nodecount)
+    csv_writer.writerow(kdtree)
+    csv_writer.writerow(scan)
+    file.close()
 
     plt.figure(1)
     plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
@@ -215,6 +222,17 @@ def experiment2():
                                                                                        content='all',
                                                                                        query_param=query_param,
                                                                                        region_params=region_params)
+
+    log_path = 'experiment2.csv'
+    file = open(log_path, 'w', encoding='utf-8', newline='')
+    csv_writer = csv.writer(file)
+    csv_writer.writerow(rtreep)
+    csv_writer.writerow(rtreep_nodecount)
+    csv_writer.writerow(rtreea)
+    csv_writer.writerow(rtreea_nodecount)
+    csv_writer.writerow(kdtree)
+    file.close()
+
     plt.figure(3)
     plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
     plt.plot(blocksizes, rtreea, color='red',label='Verkel AR*tree')
@@ -265,6 +283,15 @@ def experiment3():
     logging.info("rtree count(gaussian)=" + str(rtree_gaussian_count))
     logging.info("rtree time(uniform)=" + str(rtree_uniform_time))
     logging.info("rtree count(uniform)=" + str(rtree_uniform_count))
+
+    log_path = 'experiment3.csv'
+    file = open(log_path, 'w', encoding='utf-8', newline='')
+    csv_writer = csv.writer(file)
+    csv_writer.writerow(rtree_gaussian_time)
+    csv_writer.writerow(rtree_gaussian_count)
+    csv_writer.writerow(rtree_uniform_time)
+    csv_writer.writerow(rtree_uniform_count)
+    file.close()
 
 
     plt.figure(5)
@@ -331,6 +358,18 @@ def experiment4():
     logging.info(traj_lengths)
     logging.info(block_dag_lengths)
     logging.info(mpt_lengths)
+
+    log_path = 'experiment4.csv'
+    file = open(log_path, 'w', encoding='utf-8', newline='')
+    csv_writer = csv.writer(file)
+    csv_writer.writerow(blocksizes)
+    csv_writer.writerow(account_lengths)
+    csv_writer.writerow(tran_lengths)
+    csv_writer.writerow(traj_lengths)
+    csv_writer.writerow(block_dag_lengths)
+    csv_writer.writerow(mpt_lengths)
+    file.close()
+
     plt.figure(7)
     plt.plot(blocksizes, account_lengths,label="Account")
     plt.plot(blocksizes, tran_lengths,label="Transaction")
@@ -342,27 +381,7 @@ def experiment4():
 
 
 
-def fun(matrix : list) -> list:
-    """
-    将图的邻接矩阵转换为边构成的元组列表
-    :param   matrix list[[int]]  邻接矩阵
-    :result  list[tuple] 每个边构成的列表
-    :example
-              matrix = [[0,1,0,0],
-                        [0,0,1,1],
-                        [0,0,0,0],
-                        [0,0,0,0]
-                       ]
-              result = fun(matrix)
-              print(str(result))   #  [('0','1'),('1','2'),('1','3')]
-    """
-    result = []
-    for rowno,row in enumerate(matrix):
-        for colno,col in enumerate(row):
-            if col != 1:
-                continue
-            result.append((str(rowno),str(colno)))
-    return result
+
 
 if __name__ == '__main__':
     #experiment1()
