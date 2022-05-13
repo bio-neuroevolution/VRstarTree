@@ -144,7 +144,7 @@ def run_query_transaction(context,count=10,blocksizes=None,content='all',query_p
             rtreea[j] = rtreea[j] + [rp[j]]
             rtreea_nodecount[j] = rtreea_nodecount[j] + [ranode[j]]
             kdtree[j] = kdtree[j] + [kd[j]]
-            scan[i] = scan[j] + [sc[j]]
+            scan[j] = scan[j] + [sc[j]]
 
     rtreep = [np.average(e) for e in rtreep]
     rtreep_nodecount = [np.average(e) for e in rtreep_nodecount]
