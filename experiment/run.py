@@ -331,7 +331,7 @@ def experiment4():
         logging.info('创建BlockDAG...')
         settings = dict(repeat_times=1, tr=60, D=3, bs=blocksize, alpha=10)
         block_dag = simulation.GeneratorDAGchain.generate(**settings)
-        block_dag_length = block_dag.merkle_kd_trees.proof_length(proof_length_unit)
+        block_dag_length = block_dag.merkle_kd_trees[0].proof_length(proof_length_unit)
         print(block_dag_length)
 
 
