@@ -86,12 +86,14 @@ class BranchNode(InternalNode):
         return len([v for v in self.entries if v is not None and v != -1])
 
     def index(self, index):
-        xh = 0
-        while self.entries[xh] is not None and self.entries[xh] != -1:
-            if xh == index:
-                return self.entries[xh]
-            xh += 1
-        return ''
+        for i,e in enumerate(self.entries):
+            if e is None or e == -1:
+                continue
+            if index == 0:
+                return e
+            index -= 1
+
+
 
 
     def serialize(self):
@@ -242,8 +244,6 @@ class VerklePatriciaTree:
 
     def proof_length(self,count,unit):
         def _paths(node=None,paths=[]):
-            if node is None:
-                node = self.root
             if node is None: return
             if isinstance(node, LeafNode):
                 paths.append(unit)

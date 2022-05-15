@@ -178,6 +178,12 @@ class Rectangle(Geometry):
                     overlop = mbr1.overlop(mbr2).volume()
                     plans.append(dict(mbr=mbr,dimension=d,index=i,area=area,overlop=overlop,g=[g1,g2]))
 
+        if mode is None or mode == '':
+            for p in plans:
+                g1,g2 = p['g'][0],p['g'][1]
+                p['g'][0],p['g'][1] = [mbrs.index(m) for m in g1], [mbrs.index(m) for m in g2]
+            return plans
+
         optima, min_area = None, 0
         if mode == 'overlop':
             index = np.argmin([p['overlop'] for p in plans])

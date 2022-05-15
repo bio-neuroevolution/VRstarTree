@@ -253,11 +253,20 @@ class RTree:
                     mbr1, mbr2 = Rectangle.unions([g.mbr for g in g1]), Rectangle.unions([g.mbr for g in g2])
                     overlop = mbr1.overlop(mbr2).volume()
                     area = mbr1.volume()+mbr2.volume()
-                    plans.append(dict(g=[g1, g2], node=node, d=d, pos=j,overlop=overlop, area=area))
+                    cov = Collections.group_cov([g.ref for g in g1], [g.ref for g in g2])
+                    plans.append(dict(g=[g1, g2], cov=cov,node=node, d=d, pos=j,overlop=overlop, area=area))
 
+        # 选择组间方差大的
+        plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
+        maxcov = plans[0]['cov']
+        plans = [p for p in plans if abs(maxcov - p['cov']) <= 5.0]
+
+        #选择总面积小的
         plans = sorted(plans, key=lambda p: p['area'])
         minarea = plans[0]['area']
         plans = [p for p in plans if abs(p['area']-minarea)<=0]
+
+        #最后选择重叠面积小的
         plans = sorted(plans,key=lambda p:p['overlop'])
         optima = plans[0]
         for i in range(2):
@@ -285,10 +294,15 @@ class RTree:
                     g1, g2 = [entries[g] for g in g1],[entries[g] for g in g2]
                     mbr1, mbr2 = Rectangle.unions([g.mbr for g in g1]), Rectangle.unions([g.mbr for g in g2])
                     cov = Collections.group_cov([g.ref for g in g1], [g.ref for g in g2])
-                    if len(plans) == 0 or cov >= maxcov:
-                        maxcov = cov
-                        plans.append(dict(g=[g1, g2], cov=cov, entry=entry, d=d, pos=j,
+                    plans.append(dict(g=[g1, g2], cov=cov, entry=entry, d=d, pos=j,
                                           overlop=mbr1.overlop(mbr2).volume(), area=mbr1.volume() + mbr2.volume()))
+
+        # 选择组间方差大的
+        plans = sorted(plans,key=lambda p:p['cov'],reverse=True)
+        maxcov = plans[0]['cov']
+        plans = [p for p in plans if abs(maxcov-p['cov'])<=5.0]
+
+        #选择重叠面积小的
         plans = sorted(plans, key=lambda p: p['overlop'])
         optima = plans[0]
         for i in range(2):
@@ -299,6 +313,10 @@ class RTree:
         return leafs
 
     def rearrage_all(self):
+
+        oldalgs = RTree.algs.copy()
+        RTree.algs['split_node'] = alg.split_node_ref
+
         entries = self.all_entries()
         nodes = []
         self.rearrage_leafs(entries,nodes)
@@ -312,7 +330,7 @@ class RTree:
             results,nodes = [],parents
 
 
-
+        RTree.algs = oldalgs
 
 
 

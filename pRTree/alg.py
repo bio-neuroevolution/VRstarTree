@@ -181,7 +181,7 @@ def split_node_rstar(tree,node):
 
 def merge_nodes_rstar(tree,nodes):
     '''
-    根据引用计数合并节点
+    合并节点
     '''
     if nodes is None or len(nodes)<=0:return nodes
     ## 还不需要合并
@@ -213,6 +213,55 @@ def merge_nodes_rstar(tree,nodes):
     return parent.children
 
 def split_node_ref(tree,node):
+    """
+    基于引用计数的分裂算法
+    :param tree RTree
+    :param node RNode 一定是叶节点
+    """
+    if len(node.entries)<=0:return [node]
+    # 计算所有分裂方案
+    plans = geo.Rectangle.groupby(tree,[e.mbr for e in node.entries],mode='')
+    #为所有分裂方案计算访问频率的组间方差
+    for p in plans:
+        g1,g2 = p['g'][0],p['g'][1]
+        p['g'][0], p['g'][1] = [node.entries[g] for g in g1],[node.entries[g] for g in g2]
+        cov = Collections.group_cov([g.ref for g in g1], [g.ref for g in g2])
+        p['cov'] = cov
+
+    # 选择组间方差大的
+    plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
+    maxcov = plans[0]['cov']
+    plans = [p for p in plans if abs(maxcov - p['cov']) <= 5.0]
+
+    # 选择总面积小的
+    plans = sorted(plans, key=lambda p: p['area'])
+    minarea = plans[0]['area']
+    plans = [p for p in plans if abs(p['area'] - minarea) <= 0]
+
+    # 最后选择重叠面积小的
+    plans = sorted(plans, key=lambda p: p['overlop'])
+    optima = plans[0]
+    g1, g2 = optima['g'][0], optima['g'][1]
+
+    if node.parent is None:
+        tree.root = RNode()
+        tree.root.children = [RNode(parent=tree.root, children=[], entries=g1),
+                              RNode(parent=tree.root, children=[], entries=g2)]
+        tree.root._update_mbr()
+        tree.depth += 1
+        return tree.root.children
+    else:
+        node.parent.children = list(set(node.parent.children) - set([node]))
+        parent, node.parent = node.parent, None
+        n1 = RNode(parent=parent, children=[], entries=g1)
+        n2 = RNode(parent=parent, children=[], entries=g2)
+        parent._update_mbr()
+        if len(parent.children) > tree.context.max_children_num:
+            merge_nodes_rstar(tree, parent.children)
+        return parent.children
+
+
+def split_node_ref2(tree,node):
     '''
     基于引用计数的分裂算法
     :param tree RTree
@@ -268,6 +317,7 @@ def split_node_ref(tree,node):
         if len(parent.children) > tree.context.max_children_num:
             merge_nodes_ref(tree, parent.children)
         return parent.children
+
 
 
 def merge_nodes_ref(tree,nodes):

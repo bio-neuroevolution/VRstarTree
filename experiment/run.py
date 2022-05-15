@@ -1,6 +1,9 @@
+import os
+
 import time
 from random import random
 import csv
+import io
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -331,19 +334,21 @@ def experiment4():
         logging.info('创建BlockDAG...')
         settings = dict(repeat_times=1, tr=60, D=3, bs=blocksize, alpha=10)
         block_dag = simulation.GeneratorDAGchain.generate(**settings)
-        block_dag_length = block_dag.merkle_kd_trees[0].proof_length(proof_length_unit)
+        block_dag_length = block_dag.merkle_kd_trees[1].proof_length(proof_length_unit)
         print(block_dag_length)
 
 
         logging.info('创建MPT...')
         dataLoader = PocemonLoader()
         account_names, _ = dataLoader.create_account_name(blocksize, context.account_length)
-        mpt = MerklePatriciaTree()
+        mpt = MerklePatriciaTree(xh=i+1,from_scratch=True)
 
         for name in account_names:
             mpt.insert(name)
         mpt_length = mpt.proof_length(count=proof_sample_count,unit=proof_length_unit)
         print(mpt_length)
+        #import shutil
+        #shutil.rmtree('./db')
 
         account_lengths.append(account_length)
         tran_lengths.append(tran_length)
@@ -384,8 +389,8 @@ def experiment4():
 
 
 if __name__ == '__main__':
-    #experiment1()
+    experiment1()
     #experiment2()
     #experiment3()
-    experiment4()
+    #experiment4()
 
