@@ -155,6 +155,7 @@ def run_query_transaction(context,count=10,blocksizes=None,content='all',query_p
     rtreea = [np.average(e) for e in rtreea]
     rtreea_nodecount = [np.average(e) for e in rtreea_nodecount]
     kdtree = [np.average(e) for e in kdtree]
+    scan = [np.average(e) for e in scan]
 
     return rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree,scan
 
