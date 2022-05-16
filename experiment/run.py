@@ -145,7 +145,7 @@ def run_query_transaction(context,count=10,blocksizes=None,content='all',query_p
         for j in range(len(blocksizes)):
             rtreep[j] = rtreep[j] + [rp[j]]
             rtreep_nodecount[j] = rtreep_nodecount[j] + [rpnode[j]]
-            rtreea[j] = rtreea[j] + [rp[j]]
+            rtreea[j] = rtreea[j] + [ra[j]]
             rtreea_nodecount[j] = rtreea_nodecount[j] + [ranode[j]]
             kdtree[j] = kdtree[j] + [kd[j]]
             scan[j] = scan[j] + [sc[j]]
