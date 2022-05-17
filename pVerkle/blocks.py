@@ -310,7 +310,7 @@ class BlockChain:
         :param lengthcenter float 查询窗口的宽度均值
         :param lengthscale float 查询窗口的宽度方差
         """
-        if lengthscale <=0:
+        if lengthscale <= 0:
             # 表示在均匀分布上采样
             r = []
             length = lengthcenter
