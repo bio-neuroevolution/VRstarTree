@@ -265,7 +265,7 @@ def experiment3():
         实现Verkle AR*-tree、Verkel R*-tree在不同查询分布下的比较
         :return:
         '''
-    max_children_nums = [2,4,8,16,32,48,64,80,96]
+    max_children_nums = [4,8,16,32,48,64,80,96,108,128]
     blocksizes = [90]
     itercount = 2
     region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
@@ -281,7 +281,7 @@ def experiment3():
                                                                                              blocksizes=blocksizes,
                                                                                              content='rtree,optima',
                                                                                              query_param=query_param,
-                                                                                             region_params={})
+                                                                                             region_params=region_params)
         rtree_gaussian_time.append(rtreep1[0])
         rtree_gaussian_count.append(rtreep_nodecount1[0])
 
