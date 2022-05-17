@@ -231,11 +231,11 @@ def experiment2():
 
     region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
                      'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [1., 1., 1.]}
-    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,_ = run_query_transaction(context, count=1,
-                                                                                       blocksizes=blocksizes,
-                                                                                       content='all',
-                                                                                       query_param=query_param,
-                                                                                       region_params=region_params)
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree, _ = run_query_transaction(context, count=1,
+                                                                                          blocksizes=blocksizes,
+                                                                                          content='all',
+                                                                                          query_param=query_param,
+                                                                                          region_params=region_params)
 
     log_path = 'experiment2.csv'
     file = open(log_path, 'w', encoding='utf-8', newline='')
@@ -248,15 +248,15 @@ def experiment2():
     file.close()
 
     plt.figure(3)
-    #plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
-    plt.plot(blocksizes, rtreea, color='red',label='Verkel AR*tree')
-    plt.plot(blocksizes, kdtree, color='black',label='Merkel KDtree')
+    # plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
+    plt.plot(blocksizes, rtreea, color='red', label='Verkel AR*tree')
+    plt.plot(blocksizes, kdtree, color='black', label='Merkel KDtree')
     plt.legend(loc='best')
     plt.savefig('experiment2_time.png')
 
     plt.figure(4)
-    plt.plot(blocksizes, rtreep_nodecount, color='blue',label='Verkel R*tree')
-    plt.plot(blocksizes, rtreea_nodecount, color='red',label='Verkel AR*tree')
+    plt.plot(blocksizes, rtreep_nodecount, color='blue', label='Verkel R*tree')
+    plt.plot(blocksizes, rtreea_nodecount, color='red', label='Verkel AR*tree')
     plt.legend(loc='best')
     plt.savefig('experiment2_count.png')
 
