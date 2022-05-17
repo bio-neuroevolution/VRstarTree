@@ -76,6 +76,9 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
             rtreep.append(time.time() - begin)
             rtreep_nodecount.append(chain.query_tran_node_count)
             logging.info("VRTree交易查询消耗（优化前）:" + str(rtreep[-1])+'，访问节点数：'+str(chain.query_tran_node_count))
+        else:
+            rtreep.append(0.)
+            rtreep_nodecount.append(0)
 
         if content == 'all' or content.__contains__('optima'):
             # 根据查询优化
@@ -91,6 +94,9 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
             rtreea.append(time.time() - begin)
             rtreea_nodecount.append(chain.query_tran_node_count)
             logging.info("VRTree交易查询消耗（优化后）:" + str(rtreea[-1])+",访问节点数："+str(chain.query_tran_node_count))
+        else:
+            rtreea.append(0.)
+            rtreea_nodecount.append(0)
 
         if content == 'all' or content.__contains__('blockdag'):
             # 创建block_dag区块(用于对比，来自https://github.com/ILDAR9/spatiotemporal blockdag.)
@@ -121,6 +127,8 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
 
             kdtree.append(time.time() - begin)
             logging.info("BlockDAG交易查询消耗:" + str(kdtree[-1]))
+        else:
+            kdtree.append(0.)
 
         if content == 'all' or content.__contains__('scan'):
             logging.info("scan执行查询...")
@@ -130,6 +138,8 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
                 scancount += len([tx for tx in transactions if tx.mbr.isOverlop(mbr)])
             scan.append(time.time() - begin)
             logging.info("scan交易查询消耗:" + str(scan[-1]))
+        else:
+            scan.append(0)
 
 
     return rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree,scan
@@ -214,14 +224,14 @@ def experiment2():
         实现Verkle AR*-tree、Verkel R*-tree对于非点类型数据查询的性能比较
         :return:
         '''
-    context = Configuration(max_children_num=32, max_entries_num=8, account_length=8, account_count=200,
+    context = Configuration(max_children_num=8, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
     query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
     blocksizes = [30, 50, 70, 90, 110, 130, 150, 170, 190]
 
-    region_params = {'geotype_probs': [0.5, 0.0, 0.5], 'length_probs': [0.6, 0.3, 0.1],
-                     'lengthcenters': [50., 100., 300.], 'lengthscales': [1., 1., 1.]}
-    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree = run_query_transaction(context, count=3,
+    region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
+                     'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [1., 1., 1.]}
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,_ = run_query_transaction(context, count=1,
                                                                                        blocksizes=blocksizes,
                                                                                        content='all',
                                                                                        query_param=query_param,
@@ -238,7 +248,7 @@ def experiment2():
     file.close()
 
     plt.figure(3)
-    plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
+    #plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
     plt.plot(blocksizes, rtreea, color='red',label='Verkel AR*tree')
     plt.plot(blocksizes, kdtree, color='black',label='Merkel KDtree')
     plt.legend(loc='best')
@@ -258,6 +268,9 @@ def experiment3():
     max_children_nums = [2,4,8,16,32,48,64,80,96]
     blocksizes = [90]
     itercount = 2
+    region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
+                     'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [1., 1., 1.]}
+
     rtree_gaussian_time,rtree_gaussian_count,rtree_uniform_time,rtree_uniform_count = [],[],[],[]
     for i,max_children_num in enumerate(max_children_nums):
         context = Configuration(max_children_num=max_children_num, max_entries_num=max_children_num, account_length=8, account_count=200,
@@ -390,8 +403,8 @@ def experiment4():
 
 
 if __name__ == '__main__':
-    experiment1()
-    #experiment2()
+    #experiment1()
+    experiment2()
     #experiment3()
     #experiment4()
 

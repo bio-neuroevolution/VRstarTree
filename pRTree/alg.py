@@ -223,8 +223,8 @@ def split_node_ref(tree,node):
     plans = geo.Rectangle.groupby(tree,[e.mbr for e in node.entries],mode='')
     #为所有分裂方案计算访问频率的组间方差
     for p in plans:
-        g1,g2 = p['g'][0],p['g'][1]
-        p['g'][0], p['g'][1] = [node.entries[g] for g in g1],[node.entries[g] for g in g2]
+        g1,g2 = [node.entries[g] for g in p['g'][0]],[node.entries[g] for g in p['g'][1]]
+        p['g'][0], p['g'][1] = g1,g2
         cov = Collections.group_cov([g.ref for g in g1], [g.ref for g in g2])
         p['cov'] = cov
 
