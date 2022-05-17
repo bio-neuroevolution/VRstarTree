@@ -227,7 +227,7 @@ def experiment2():
     context = Configuration(max_children_num=8, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
     query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
-    blocksizes = [30, 50, 70, 90, 110, 130, 150, 170, 190]
+    blocksizes = [30, 50, 70, 90, 110, 130, 150, 170]
 
     region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
                      'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [1., 1., 1.]}
@@ -271,7 +271,12 @@ def experiment3():
     region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
                      'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [1., 1., 1.]}
 
-    rtree_gaussian_time,rtree_gaussian_count,rtree_uniform_time,rtree_uniform_count = [],[],[],[]
+    rtree_gaussian_time_init,rtree_gaussian_time_optima = [],[]
+    rtree_gaussian_count_init,rtree_gaussian_count_optima= [] ,[]
+
+    rtree_uniform_time_init, rtree_uniform_time_optima = [], []
+    rtree_uniform_count_init, rtree_uniform_count_optima = [], []
+
     for i,max_children_num in enumerate(max_children_nums):
         context = Configuration(max_children_num=max_children_num, max_entries_num=max_children_num, account_length=8, account_count=200,
                                 select_nodes_func='', merge_nodes_func='', split_node_func='')
@@ -282,44 +287,62 @@ def experiment3():
                                                                                              content='rtree,optima',
                                                                                              query_param=query_param,
                                                                                              region_params=region_params)
-        rtree_gaussian_time.append(rtreep1[0])
-        rtree_gaussian_count.append(rtreep_nodecount1[0])
+        rtree_gaussian_time_init.append(rtreep1[0])
+        rtree_gaussian_count_init.append(rtreep_nodecount1[0])
+        rtree_gaussian_time_optima.append(rtreea1[0])
+        rtree_gaussian_count_optima.append(rtreea_nodecount1[0])
 
 
-        query_param = dict(count=200, sizes=[], posrandom=0, lengthcenter=0.05, lengthscale=0)
+        query_param = dict(count=200, sizes=[2,2,2], posrandom=0, lengthcenter=0.05, lengthscale=0)
         rtreep2, rtreep_nodecount2, rtreea2, rtreea_nodecount2, _, _ = run_query_transaction(context, count=itercount,
                                                                                              blocksizes=blocksizes,
                                                                                              content='rtree,optima',
                                                                                              query_param=query_param,
-                                                                                             region_params={})
-        rtree_uniform_time.append(rtreep2[0])
-        rtree_uniform_count.append(rtreea_nodecount2[0])
+                                                                                             region_params=region_params)
+        rtree_uniform_time_init.append(rtreep2[0])
+        rtree_uniform_count_init.append(rtreep_nodecount2[0])
+        rtree_uniform_time_optima.append(rtreea2[0])
+        rtree_uniform_count_optima.append(rtreea_nodecount2[0])
 
 
-    logging.info("rtree time(gaussian)=" + str(rtree_gaussian_time))
-    logging.info("rtree count(gaussian)=" + str(rtree_gaussian_count))
-    logging.info("rtree time(uniform)=" + str(rtree_uniform_time))
-    logging.info("rtree count(uniform)=" + str(rtree_uniform_count))
+    logging.info(str(rtree_gaussian_time_init))
+    logging.info(str(rtree_gaussian_count_init))
+    logging.info(str(rtree_gaussian_time_optima))
+    logging.info(str(rtree_gaussian_count_optima))
+
+    logging.info(str(rtree_uniform_time_init))
+    logging.info(str(rtree_uniform_count_init))
+    logging.info(str(rtree_uniform_time_optima))
+    logging.info(str(rtree_uniform_count_optima))
+
 
     log_path = 'experiment3.csv'
     file = open(log_path, 'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(file)
-    csv_writer.writerow(rtree_gaussian_time)
-    csv_writer.writerow(rtree_gaussian_count)
-    csv_writer.writerow(rtree_uniform_time)
-    csv_writer.writerow(rtree_uniform_count)
+    csv_writer.writerow(rtree_gaussian_time_init)
+    csv_writer.writerow(rtree_gaussian_count_init)
+    csv_writer.writerow(rtree_gaussian_time_optima)
+    csv_writer.writerow(rtree_gaussian_count_optima)
+    csv_writer.writerow(rtree_uniform_time_init)
+    csv_writer.writerow(rtree_uniform_count_init)
+    csv_writer.writerow(rtree_uniform_time_optima)
+    csv_writer.writerow(rtree_uniform_count_optima)
     file.close()
 
 
     plt.figure(5)
-    plt.plot(max_children_nums, rtree_gaussian_time, color='blue',label="Gaussian")
-    plt.plot(max_children_nums, rtree_uniform_time, color='red',label="Uniform")
+    plt.plot(max_children_nums, rtree_gaussian_time_init, color='blue',label="Gaussian without adaptive")
+    plt.plot(max_children_nums, rtree_gaussian_time_optima, color='red', label="Gaussian with adaptive")
+    plt.plot(max_children_nums, rtree_uniform_time_init, color='green',label="Uniform without adaptive")
+    plt.plot(max_children_nums, rtree_uniform_time_optima, color='black', label="Uniform with adaptive")
     plt.legend(loc='best')
     plt.savefig('experiment3_time.png')
 
     plt.figure(6)
-    plt.plot(max_children_nums, rtree_gaussian_count, color='blue',label="Gaussian")
-    plt.plot(max_children_nums, rtree_uniform_count, color='red',label="Uniform")
+    plt.plot(max_children_nums, rtree_gaussian_count_init, color='blue', label="Gaussian without adaptive")
+    plt.plot(max_children_nums, rtree_gaussian_count_optima, color='red', label="Gaussian with adaptive")
+    plt.plot(max_children_nums, rtree_uniform_count_init, color='green', label="Uniform without adaptive")
+    plt.plot(max_children_nums, rtree_uniform_count_optima, color='black', label="Uniform with adaptive")
     plt.legend(loc="best")
     plt.savefig('experiment3_count.png')
 
