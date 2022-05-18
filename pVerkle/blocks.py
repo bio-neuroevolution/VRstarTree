@@ -124,7 +124,7 @@ class Block:
         rs.update({'start_time':str(self.start_time),'end_time':str(self.end_time),'timestamp':str(self.timestamp)})
         rs.update({'statetrieRoot':self.statetrieRoot.serialize()})
         rs.update({'trantrieRoot': self.trantrieRoot.serialize()})
-        rs.update({'trajetrieRoot': self.trajetrieRoot.serialize()})
+        #rs.update({'trajetrieRoot': self.trajetrieRoot.serialize()})
         return rs
 
     def summary(self,filename,path):
@@ -152,8 +152,8 @@ class Block:
     def _create_traj_trie(self,transactions):
         mbr = geo.Rectangle(4,[0.,1.,0.,1.,0.,1.,0.,1.])
         tree = VerkleRTree(self.context,mbr)
-        for tr in transactions:
-            tree.insert(BRecord(tr.account,tr.log,tr.lat,tr.ts,self.account_distance(tr.account)))
+        #for tr in transactions:
+        #    tree.insert(BRecord(tr.account,tr.log,tr.lat,tr.ts,self.account_distance(tr.account)))
         return tree
 
     def account_distance(self,s1):
