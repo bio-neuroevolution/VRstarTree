@@ -262,26 +262,29 @@ def experiment2():
 
 def experiment3():
     '''
-        实现Verkle AR*-tree、Verkel R*-tree在不同查询分布下的比较
-        :return:
-        '''
-    max_children_nums = [4,8,16,32,48,64,80,96,108,128]
+            实现Verkle AR*-tree、Verkel R*-tree在不同查询分布下的比较
+            :return:
+            '''
+    max_children_nums = [4, 8, 16, 32, 48, 64, 80, 96, 108, 128]
     blocksizes = [90]
     itercount = 2
     region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
                      'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [1., 1., 1.]}
 
-    rtree_gaussian_time_init,rtree_gaussian_time_optima = [],[]
-    rtree_gaussian_count_init,rtree_gaussian_count_optima= [] ,[]
+    rtree_gaussian_time_init, rtree_gaussian_time_optima = [], []
+    rtree_gaussian_count_init, rtree_gaussian_count_optima = [], []
 
     rtree_uniform_time_init, rtree_uniform_time_optima = [], []
     rtree_uniform_count_init, rtree_uniform_count_optima = [], []
 
-    for i,max_children_num in enumerate(max_children_nums):
-        context = Configuration(max_children_num=max_children_num, max_entries_num=max_children_num, account_length=8, account_count=200,
+    for i, max_children_num in enumerate(max_children_nums):
+        logging.info("max_children_num=" + str(max_children_num))
+        context = Configuration(max_children_num=max_children_num, max_entries_num=max_children_num, account_length=8,
+                                account_count=200,
                                 select_nodes_func='', merge_nodes_func='', split_node_func='')
-        query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
+        query_param = dict(count=2000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
 
+        logging.info('gaussion distrubution:')
         rtreep1, rtreep_nodecount1, rtreea1, rtreea_nodecount1, _, _ = run_query_transaction(context, count=itercount,
                                                                                              blocksizes=blocksizes,
                                                                                              content='rtree,optima',
@@ -292,8 +295,8 @@ def experiment3():
         rtree_gaussian_time_optima.append(rtreea1[0])
         rtree_gaussian_count_optima.append(rtreea_nodecount1[0])
 
-
-        query_param = dict(count=200, sizes=[2,2,2], posrandom=0, lengthcenter=0.05, lengthscale=0)
+        logging.info('uniform distrubution:')
+        query_param = dict(count=2000, sizes=[2, 2, 2], posrandom=0, lengthcenter=0.05, lengthscale=0)
         rtreep2, rtreep_nodecount2, rtreea2, rtreea_nodecount2, _, _ = run_query_transaction(context, count=itercount,
                                                                                              blocksizes=blocksizes,
                                                                                              content='rtree,optima',
@@ -304,7 +307,6 @@ def experiment3():
         rtree_uniform_time_optima.append(rtreea2[0])
         rtree_uniform_count_optima.append(rtreea_nodecount2[0])
 
-
     logging.info(str(rtree_gaussian_time_init))
     logging.info(str(rtree_gaussian_count_init))
     logging.info(str(rtree_gaussian_time_optima))
@@ -314,7 +316,6 @@ def experiment3():
     logging.info(str(rtree_uniform_count_init))
     logging.info(str(rtree_uniform_time_optima))
     logging.info(str(rtree_uniform_count_optima))
-
 
     log_path = 'experiment3.csv'
     file = open(log_path, 'w', encoding='utf-8', newline='')
@@ -329,11 +330,10 @@ def experiment3():
     csv_writer.writerow(rtree_uniform_count_optima)
     file.close()
 
-
     plt.figure(5)
-    plt.plot(max_children_nums, rtree_gaussian_time_init, color='blue',label="Gaussian without adaptive")
+    plt.plot(max_children_nums, rtree_gaussian_time_init, color='blue', label="Gaussian without adaptive")
     plt.plot(max_children_nums, rtree_gaussian_time_optima, color='red', label="Gaussian with adaptive")
-    plt.plot(max_children_nums, rtree_uniform_time_init, color='green',label="Uniform without adaptive")
+    plt.plot(max_children_nums, rtree_uniform_time_init, color='green', label="Uniform without adaptive")
     plt.plot(max_children_nums, rtree_uniform_time_optima, color='black', label="Uniform with adaptive")
     plt.legend(loc='best')
     plt.savefig('experiment3_time.png')

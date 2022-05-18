@@ -256,6 +256,15 @@ class RTree:
                     cov = Collections.group_cov([g.ref for g in g1], [g.ref for g in g2])
                     plans.append(dict(g=[g1, g2], cov=cov,node=node, d=d, pos=j,overlop=overlop, area=area))
 
+        if len(plans) == 0:
+            g1 = nodes[:len(nodes)//2]
+            g2 = nodes[len(nodes)//2:]
+            mbr1, mbr2 = Rectangle.unions([g.mbr for g in g1]), Rectangle.unions([g.mbr for g in g2])
+            overlop = mbr1.overlop(mbr2).volume()
+            area = mbr1.volume() + mbr2.volume()
+            cov = Collections.group_cov([g.ref for g in g1], [g.ref for g in g2])
+            plans.append(dict(g=[g1,g2], cov=cov,node=node, d=d, pos=j,overlop=overlop, area=area))
+
         # 选择组间方差大的
         plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
         maxcov = plans[0]['cov']
