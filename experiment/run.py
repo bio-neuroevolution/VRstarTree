@@ -1,3 +1,5 @@
+import logging
+import math
 import os
 
 import time
@@ -8,14 +10,15 @@ import io
 import numpy as np
 import matplotlib.pyplot as plt
 
+import geo
 from log import LogHandler
 
 
 
 from blocks import BTransaction, BlockChain
 from dataloader import PocemonLoader
-from merklePatriciaTree.patricia_tree import MerklePatriciaTree
-from utils import Configuration
+#from merklePatriciaTree.patricia_tree import MerklePatriciaTree
+from utils import Configuration, Collections
 from wise import simulation
 from wise.blockDAG import analysis_utils
 from wise.blockDAG import search_on_blockDAG as sob
@@ -45,7 +48,7 @@ def _initdata(context,region_params={}):
         tr.account = accs[i]
     return transactions
 
-def query_transaction(context,blocksizes,content='all',query_param={},region_params={}):
+def query_transaction(context,blocksizes,content='all',query_param={},region_params={},query_mbrs = []):
     """
     一次查询实验
     :param conetxt 配置信息
@@ -60,8 +63,8 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
     for i,blocksize in enumerate(blocksizes):
         logging.info("blocksize=" + str(blocksize))
         # 创建查询分布
-
-        mbrs = BlockChain.create_query(count=query_param['count'], sizes=query_param['sizes'], posrandom=query_param['posrandom'], lengthcenter=query_param['lengthcenter'], lengthscale=query_param['lengthscale'])
+        if len(query_mbrs)>0:
+            query_mbrs = create_query(count=query_param['count'], sizes=query_param['sizes'], posrandom=query_param['posrandom'], lengthcenter=query_param['lengthcenter'], lengthscale=query_param['lengthscale'])
 
         if content == 'all' or content.__contains__('rtree'):
             logging.info("VRTree创建区块...")
@@ -71,7 +74,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
 
             # 执行查询
             begin = time.time()
-            for mbr in mbrs:
+            for mbr in query_mbrs:
                 chain.query_tran(mbr)
             rtreep.append(time.time() - begin)
             rtreep_nodecount.append(chain.query_tran_node_count)
@@ -89,7 +92,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
 
             # 第二次交易查询
             begin = time.time()
-            for mbr in mbrs:
+            for mbr in query_mbrs:
                 chain.query_tran(mbr)
             rtreea.append(time.time() - begin)
             rtreea_nodecount.append(chain.query_tran_node_count)
@@ -107,7 +110,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
 
             # 创建查询
             query_ranges = []
-            for i,mbr in enumerate(mbrs):
+            for i,mbr in enumerate(query_mbrs):
                 bs1 = mbr.boundary(0)  #经度范围
                 bs2 = mbr.boundary(1)  #纬度范围
                 minp = (bs1[0]*(block_dag.max_lat-block_dag.min_lat)+block_dag.min_lat,
@@ -134,7 +137,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
             logging.info("scan执行查询...")
             scancount = 0
             begin = time.time()
-            for mbr in mbrs:
+            for mbr in query_mbrs:
                 scancount += len([tx for tx in transactions if tx.mbr.isOverlop(mbr)])
             scan.append(time.time() - begin)
             logging.info("scan交易查询消耗:" + str(scan[-1]))
@@ -147,11 +150,11 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
     #plt.plot(blocksizes, rtreea,color='red')
     #plt.plot(blocksizes,kdtree,color='black')
 
-def run_query_transaction(context,count=10,blocksizes=None,content='all',query_param={},region_params={}):
+def run_query_transaction(context,count=10,blocksizes=None,content='all',query_param={},region_params={},query_mbrs = []):
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = [[]] * len(blocksizes), [[]] * len(blocksizes), [
         []] * len(blocksizes), [[]] * len(blocksizes), [[]] * len(blocksizes),[[]] * len(blocksizes)
     for i in range(count):
-        rp, rpnode, ra, ranode, kd,sc = query_transaction(context, blocksizes,content,query_param,region_params)
+        rp, rpnode, ra, ranode, kd,sc = query_transaction(context, blocksizes,content,query_param,region_params,query_mbrs)
         for j in range(len(blocksizes)):
             rtreep[j] = rtreep[j] + [rp[j]]
             rtreep_nodecount[j] = rtreep_nodecount[j] + [rpnode[j]]
@@ -168,6 +171,75 @@ def run_query_transaction(context,count=10,blocksizes=None,content='all',query_p
     scan = [np.average(e) for e in scan]
 
     return rtreep,rtreep_nodecount,rtreea,rtreea_nodecount,kdtree,scan
+
+
+def create_query(count=1,sizes:list=[2,2,2],posrandom=100,lengthcenter=0.05,lengthscale=0.025):
+    """
+    创建满足一定分布的查询
+    :param count  int 生成的查询数
+    :param sizes  list 生成的查询的每个维的中心点个数
+    :param posrandom int 中心点漂移的百分比
+    :param lengthcenter float 查询窗口的宽度均值
+    :param lengthscale float 查询窗口的宽度方差
+    """
+    if lengthscale == 0:
+        # 表示在均匀分布上采样
+        r = []
+        length = lengthcenter
+        for c in range(count):
+            center = [np.random.random() for dimension in range(len(sizes))]
+            mbr = geo.Rectangle(dimension=len(sizes))
+            for j in range(len(sizes)):
+                mbr.update(j, center[j] - length / 2, center[j] + length / 2)
+            r.append(mbr)
+        return r
+    elif lengthscale < 0:
+        r = []
+        #网格采样
+        dimension = len(sizes)
+        unit = math.ceil(count ** (1/dimension))
+        step = math.ceil(1./unit)
+        for i in range(unit):
+            for j in range(unit):
+                for k in range(unit):
+                    mbr = geo.Rectangle(dimension)
+                    mbr.update(0, i * step, (i + 1) * step)
+                    mbr.update(1, j * step, (j + 1) * step)
+                    mbr.update(2, k * step, (k + 1) * step)
+                    r.append(mbr)
+        return r
+    elif Collections.all(lambda x:x==1,sizes):
+        # 中心点采样
+        r = []
+        center = [0.5,0.5,0.5]
+        for i in range(count):
+            length = np.random.normal(loc=lengthcenter, scale=lengthscale, size=1)
+            mbr = geo.Rectangle(3)
+            mbr.update(0, 0.5 - length /2,  0.5 + length / 2)
+            mbr.update(1, 0.5 - length / 2, 0.5 + length / 2)
+            mbr.update(2, 0.5 - length / 2, 0.5 + length / 2)
+            r.append(mbr)
+        return r
+
+    # 在多元高斯分布上采样
+    ds = []
+    for i in range(len(sizes)):
+        interval = 1./(sizes[i]+1)
+        d = [(j+1)*interval for j in range(sizes[i])]
+        ds.append(d)
+
+
+    r = []
+    for c in range(count):
+        center = [np.random.choice(d,1)[0] for i,d in enumerate(ds)]
+        for i in range(len(center)):
+            center[i] += (np.random.random() * 2 - 1) / posrandom
+        length = np.random.normal(loc=lengthcenter,scale=lengthscale,size=1)
+        mbr = geo.Rectangle(dimension=len(sizes))
+        for j in range(len(sizes)):
+            mbr.update(j,center[j]-length/2,center[j]+length/2)
+        r.append(mbr)
+    return r
 
 def experiment1():
     '''
@@ -231,11 +303,11 @@ def experiment2():
 
     region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
                      'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [1., 1., 1.]}
-    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree, _ = run_query_transaction(context, count=1,
-                                                                                          blocksizes=blocksizes,
-                                                                                          content='all',
-                                                                                          query_param=query_param,
-                                                                                          region_params=region_params)
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,_ = run_query_transaction(context, count=1,
+                                                                                       blocksizes=blocksizes,
+                                                                                       content='all',
+                                                                                       query_param=query_param,
+                                                                                       region_params=region_params)
 
     log_path = 'experiment2.csv'
     file = open(log_path, 'w', encoding='utf-8', newline='')
@@ -248,101 +320,96 @@ def experiment2():
     file.close()
 
     plt.figure(3)
-    # plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
-    plt.plot(blocksizes, rtreea, color='red', label='Verkel AR*tree')
-    plt.plot(blocksizes, kdtree, color='black', label='Merkel KDtree')
+    #plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
+    plt.plot(blocksizes, rtreea, color='red',label='Verkel AR*tree')
+    plt.plot(blocksizes, kdtree, color='black',label='Merkel KDtree')
     plt.legend(loc='best')
     plt.savefig('experiment2_time.png')
 
     plt.figure(4)
-    plt.plot(blocksizes, rtreep_nodecount, color='blue', label='Verkel R*tree')
-    plt.plot(blocksizes, rtreea_nodecount, color='red', label='Verkel AR*tree')
+    plt.plot(blocksizes, rtreep_nodecount, color='blue',label='Verkel R*tree')
+    plt.plot(blocksizes, rtreea_nodecount, color='red',label='Verkel AR*tree')
     plt.legend(loc='best')
     plt.savefig('experiment2_count.png')
 
 def experiment3():
     '''
-            实现Verkle AR*-tree、Verkel R*-tree在不同查询分布下的比较
-            :return:
-            '''
-    max_children_nums = [4, 8, 16, 32, 48, 64, 80, 96, 108, 128]
+        实现Verkle AR*-tree、Verkel R*-tree在不同查询分布下的比较
+        :return:
+        '''
+    max_children_nums = [4,8,16,32,48,64,80,96,108,128]
     blocksizes = [90]
-    itercount = 2
+    itercount = 1
+    querycount = 5000
     region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
                      'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [1., 1., 1.]}
 
-    rtree_gaussian_time_init, rtree_gaussian_time_optima = [], []
-    rtree_gaussian_count_init, rtree_gaussian_count_optima = [], []
+    rtree_time_init = {'center':[],'gaussian':[],'uniform':[],'grid':[],'avg':[]}
+    rtree_time_optima = {'center': [], 'gaussian': [], 'uniform': [], 'grid': [], 'avg': []}
+    rtree_count_init = {'center': [], 'gaussian': [], 'uniform': [], 'grid': [], 'avg': []}
+    rtree_count_optima = {'center': [], 'gaussian': [], 'uniform': [], 'grid': [],'avg':[]}
 
-    rtree_uniform_time_init, rtree_uniform_time_optima = [], []
-    rtree_uniform_count_init, rtree_uniform_count_optima = [], []
+    query_param_dict = dict(
+                        center = dict(count=querycount, sizes=[1,1,1], posrandom=100, lengthcenter=0.1, lengthscale=0.05),
+                        gaussian = dict(count=querycount, sizes=[2,2,2], posrandom=100, lengthcenter=0.1, lengthscale=0.05),
+                        uniform = dict(count=querycount, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.1, lengthscale=0.0),
+                        grid= dict(count=querycount, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=-1.0)
+                        )
+    query_mbrs = {}
+    for key, query_param in query_param_dict.items():
+        mbrs = create_query(count=query_param['count'],sizes=query_param['sizes'],posrandom=query_param['posrandom'],lengthcenter=query_param['lengthcenter'],lengthscale=query_param['lengthscale'])
+        query_mbrs[key] = mbrs
 
-    for i, max_children_num in enumerate(max_children_nums):
-        logging.info("max_children_num=" + str(max_children_num))
-        context = Configuration(max_children_num=max_children_num, max_entries_num=max_children_num, account_length=8,
-                                account_count=200,
+    for i,max_children_num in enumerate(max_children_nums):
+        logging.info("max_children_num="+str(max_children_num))
+        context = Configuration(max_children_num=max_children_num, max_entries_num=max_children_num, account_length=8, account_count=200,
                                 select_nodes_func='', merge_nodes_func='', split_node_func='')
-        query_param = dict(count=2000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
 
-        logging.info('gaussion distrubution:')
-        rtreep1, rtreep_nodecount1, rtreea1, rtreea_nodecount1, _, _ = run_query_transaction(context, count=itercount,
-                                                                                             blocksizes=blocksizes,
-                                                                                             content='rtree,optima',
-                                                                                             query_param=query_param,
-                                                                                             region_params=region_params)
-        rtree_gaussian_time_init.append(rtreep1[0])
-        rtree_gaussian_count_init.append(rtreep_nodecount1[0])
-        rtree_gaussian_time_optima.append(rtreea1[0])
-        rtree_gaussian_count_optima.append(rtreea_nodecount1[0])
+        for key,query_param in query_param_dict.items():
+            logging.info('query with :' + key)
+            r1, n1, r2, n2, _, _ = run_query_transaction(context, count=itercount,blocksizes=blocksizes,
+                                                         content='rtree,optima',query_param=query_param,
+                                                         region_params=region_params,query_mbrs=query_mbrs[key])
 
-        logging.info('uniform distrubution:')
-        query_param = dict(count=2000, sizes=[2, 2, 2], posrandom=0, lengthcenter=0.05, lengthscale=0)
-        rtreep2, rtreep_nodecount2, rtreea2, rtreea_nodecount2, _, _ = run_query_transaction(context, count=itercount,
-                                                                                             blocksizes=blocksizes,
-                                                                                             content='rtree,optima',
-                                                                                             query_param=query_param,
-                                                                                             region_params=region_params)
-        rtree_uniform_time_init.append(rtreep2[0])
-        rtree_uniform_count_init.append(rtreep_nodecount2[0])
-        rtree_uniform_time_optima.append(rtreea2[0])
-        rtree_uniform_count_optima.append(rtreea_nodecount2[0])
+            rtree_time_init[key].append(r1[0])
+            rtree_time_optima[key].append(r2[0])
+            rtree_count_init[key].append(n1[0])
+            rtree_count_optima[key].append(n2[0])
 
-    logging.info(str(rtree_gaussian_time_init))
-    logging.info(str(rtree_gaussian_count_init))
-    logging.info(str(rtree_gaussian_time_optima))
-    logging.info(str(rtree_gaussian_count_optima))
+    for key, query_param in query_param_dict.items():
+        logging.info(key)
+        logging.info(str(rtree_time_init[key]))
+        logging.info(str(rtree_time_optima[key]))
+        logging.info(str(rtree_count_init[key]))
+        logging.info(str(rtree_count_optima[key]))
 
-    logging.info(str(rtree_uniform_time_init))
-    logging.info(str(rtree_uniform_count_init))
-    logging.info(str(rtree_uniform_time_optima))
-    logging.info(str(rtree_uniform_count_optima))
+
 
     log_path = 'experiment3.csv'
     file = open(log_path, 'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(file)
-    csv_writer.writerow(rtree_gaussian_time_init)
-    csv_writer.writerow(rtree_gaussian_count_init)
-    csv_writer.writerow(rtree_gaussian_time_optima)
-    csv_writer.writerow(rtree_gaussian_count_optima)
-    csv_writer.writerow(rtree_uniform_time_init)
-    csv_writer.writerow(rtree_uniform_count_init)
-    csv_writer.writerow(rtree_uniform_time_optima)
-    csv_writer.writerow(rtree_uniform_count_optima)
+    for key, query_param in query_param_dict.items():
+        csv_writer.writerow(key)
+        csv_writer.writerow(rtree_time_init[key])
+        csv_writer.writerow(rtree_time_optima[key])
+        csv_writer.writerow(rtree_count_init[key])
+        csv_writer.writerow(rtree_count_optima[key])
     file.close()
 
+
     plt.figure(5)
-    plt.plot(max_children_nums, rtree_gaussian_time_init, color='blue', label="Gaussian without adaptive")
-    plt.plot(max_children_nums, rtree_gaussian_time_optima, color='red', label="Gaussian with adaptive")
-    plt.plot(max_children_nums, rtree_uniform_time_init, color='green', label="Uniform without adaptive")
-    plt.plot(max_children_nums, rtree_uniform_time_optima, color='black', label="Uniform with adaptive")
+    plt.plot(max_children_nums, rtree_time_optima['center'], color='blue',label="center")
+    plt.plot(max_children_nums, rtree_time_optima['gaussian'], color='red', label="gaussian")
+    plt.plot(max_children_nums, rtree_time_optima['uniform'], color='green',label="uniform")
+    plt.plot(max_children_nums, rtree_time_optima['grid'], color='black', label="grid")
     plt.legend(loc='best')
     plt.savefig('experiment3_time.png')
 
     plt.figure(6)
-    plt.plot(max_children_nums, rtree_gaussian_count_init, color='blue', label="Gaussian without adaptive")
-    plt.plot(max_children_nums, rtree_gaussian_count_optima, color='red', label="Gaussian with adaptive")
-    plt.plot(max_children_nums, rtree_uniform_count_init, color='green', label="Uniform without adaptive")
-    plt.plot(max_children_nums, rtree_uniform_count_optima, color='black', label="Uniform with adaptive")
+    plt.plot(max_children_nums, rtree_count_optima['center'], color='blue', label="center")
+    plt.plot(max_children_nums, rtree_count_optima['gaussian'], color='red', label="gaussian")
+    plt.plot(max_children_nums, rtree_count_optima['uniform'], color='green', label="uniform")
+    plt.plot(max_children_nums, rtree_count_optima['grid'], color='black', label="grid")
     plt.legend(loc="best")
     plt.savefig('experiment3_count.png')
 
@@ -378,7 +445,7 @@ def experiment4():
         logging.info('创建MPT...')
         dataLoader = PocemonLoader()
         account_names, _ = dataLoader.create_account_name(blocksize, context.account_length)
-        mpt = MerklePatriciaTree(xh=i+1,from_scratch=True)
+        mpt = None #MerklePatriciaTree(xh=i+1,from_scratch=True)
 
         for name in account_names:
             mpt.insert(name)
@@ -427,7 +494,7 @@ def experiment4():
 
 if __name__ == '__main__':
     #experiment1()
-    experiment2()
-    #experiment3()
+    #experiment2()
+    experiment3()
     #experiment4()
 
