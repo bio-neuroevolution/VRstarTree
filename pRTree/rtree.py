@@ -240,7 +240,7 @@ class RTree:
                     self._doMerge(node.children)
         RTree.algs = oldalgs
 
-    def rearrage_nodes(self,nodes,results=[]):
+    def rearrage_nodes2(self,nodes,results=[]):
         mbrs = [n.mbr for n in nodes]
         plans, maxcov, minarea, minoverlop = [], 0,0,0
         for i, node in enumerate(nodes):
@@ -285,7 +285,67 @@ class RTree:
             else:
                 self.rearrage_nodes(g,results)
 
-    def rearrage_leafs(self,entries,leafs):
+    def rearrage_nodes(self, nodes, results=[]):
+        mbrs = [n.mbr for n in nodes]
+        # 寻找所有分裂方案
+        plans = geo.Rectangle.groupby(tree=self, mbrs=[e.mbr for e in nodes], mode='')
+
+        # 选择总面积小的
+        plans = sorted(plans, key=lambda p: p['area'])
+        minarea = plans[0]['area']
+        plans = [p for p in plans if abs(p['area'] - minarea) <= 0.1]
+
+        # 选择重叠面积最小的
+        plans = sorted(plans, key=lambda p: p['overlop'])
+        min_overlop = plans[0]['overlop']
+        plans = [p for p in plans if abs(min_overlop - p['overlop']) <= 0.05]
+
+        # 选择组间方差大的
+        plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
+        optima = plans[0]
+        for i in range(2):
+            g = optima['g'][i]
+            if len(g) <= self.context.max_children_num:
+                results.append(g)
+            else:
+                self.rearrage_nodes(g, results)
+
+
+
+    def rearrage_leafs(self, entries, leafs):
+        """
+        根据数据对象重新安排所有的叶子节点
+        """
+        if len(entries) == 0: return []
+        # 寻找所有分裂方案
+        plans = geo.Rectangle.groupby(tree=self,mbrs=[e.mbr for e in entries],mode='')
+        # 计算分组的访问频率的组间方差
+        for p in plans:
+            g1,g2 = p['g'][0],p['g'][1]
+            g1,g2 = [entries[g] for g in g1],[entries[g] for g in g2]
+            p['cov'] = Collections.group_cov([g.ref for g in g1], [g.ref for g in g2])
+            p['g'] = [g1,g2]
+
+        # 按照重叠面积升序排序
+        plans = sorted(plans, key=lambda p: p['overlop'])
+        min_overlop = plans[0]['overlop']
+        plans = [p for p in plans if abs(min_overlop - p['overlop']) <= 0.05]
+
+        # 选择组间方差大的
+        plans = sorted(plans, key=lambda p: p['cov'],reverse=True)
+        optima = plans[0]
+
+        # 对分组后的两组的数量分别检查是否仍旧超过阈值
+        for i in range(2):
+            if len(optima['g'][i]) <= self.context.max_entries_num:
+                leafs.append(RNode(mbr=None, parent=None, children=[], entries=optima['g'][i]))
+            else:
+                self.rearrage_leafs(optima['g'][i], leafs)
+        return leafs
+
+
+
+    def rearrage_leafs2(self,entries,leafs):
         """
         根据数据对象重新安排所有的叶子节点
         """

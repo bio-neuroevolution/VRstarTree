@@ -177,6 +177,14 @@ class Rectangle(Geometry):
                     area = mbr1.volume() + mbr2.volume()
                     overlop = mbr1.overlop(mbr2).volume()
                     plans.append(dict(mbr=mbr,dimension=d,index=i,area=area,overlop=overlop,g=[g1,g2]))
+        # 如果没有得到任何方案，则平均分成两组
+        if len(plans) == 0:
+            g1 = mbrs[:len(mbrs)//2]
+            g2 = mbrs[len(mbrs)//2:]
+            mbr1, mbr2 = Rectangle.unions(g1), Rectangle.unions(g2)
+            overlop = mbr1.overlop(mbr2).volume()
+            area = mbr1.volume() + mbr2.volume()
+            plans.append(dict(g=[g1,g2], node=None, d=-1, pos=len(mbrs)//2-1,overlop=overlop, area=area))
 
         if mode is None or mode == '':
             for p in plans:
@@ -199,8 +207,6 @@ class Rectangle(Geometry):
             optima = plans[index]
         else:
             optima = plans[0]
-
-        mbr = mbr, dimension = d, index = i, area = area, overlop = overlop, g = [g1, g2]
 
         mbr, d, i, area, overlop, g1, g2 = optima['mbr'],optima['dimension'],optima['index'],optima['area'],optima['overlop'],optima['g'][0],optima['g'][1]
         return (mbr, d, i, area, overlop, [mbrs.index(m) for m in g1], [mbrs.index(m) for m in g2])
