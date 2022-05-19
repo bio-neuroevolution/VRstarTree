@@ -63,7 +63,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
     for i,blocksize in enumerate(blocksizes):
         logging.info("blocksize=" + str(blocksize))
         # 创建查询分布
-        if len(query_mbrs)>0:
+        if len(query_mbrs)<=0:
             query_mbrs = create_query(count=query_param['count'], sizes=query_param['sizes'], posrandom=query_param['posrandom'], lengthcenter=query_param['lengthcenter'], lengthscale=query_param['lengthscale'])
 
         if content == 'all' or content.__contains__('rtree'):
@@ -85,7 +85,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
 
         if content == 'all' or content.__contains__('optima'):
             # 根据查询优化
-            chain.optima()
+            chain.optima(refused=True)
             logging.info("VRTree区块优化完成，交易VR*-tree节点总数=" + str(chain.tran_nodecount()) + ",平均=" + str(
                 chain.tran_nodecount() / len(chain.blocks)) + ",深度=" + str(chain.header.trantrieRoot.depth))
 
@@ -252,7 +252,7 @@ def experiment1():
     query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
     blocksizes = [30,50,70,90,110,130,150,170,190,210,230,250]
 
-    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = run_query_transaction(context, count=2,
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = run_query_transaction(context, count=1,
                                                                                        blocksizes=blocksizes,
                                                                                        content='all',
                                                                                        query_param=query_param,
@@ -281,13 +281,21 @@ def experiment1():
     plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
     plt.plot(blocksizes, rtreea, color='red',label='Verkel AR*tree')
     plt.plot(blocksizes, kdtree, color='black',label='Merkel KDtree')
-    plt.plot(blocksizes, scan, color='green',label='Scan')
+    #plt.plot(blocksizes, scan, color='green',label='Scan')
     plt.legend(loc='best')
+    plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.xlabel('Block Size')
+    plt.ylabel('Time(s)')
     plt.savefig('expeiment1_time.png')
 
     plt.figure(2)
     plt.plot(blocksizes, rtreep_nodecount, color='blue',label='Verkel R*tree')
     plt.plot(blocksizes, rtreea_nodecount, color='red',label='Verkel AR*tree')
+    plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.xlabel('Block Size')
+    plt.ylabel('Number of Nodes')
     plt.legend(loc='best')
     plt.savefig('expeiment1_count.png')
 
@@ -323,12 +331,20 @@ def experiment2():
     #plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
     plt.plot(blocksizes, rtreea, color='red',label='Verkel AR*tree')
     plt.plot(blocksizes, kdtree, color='black',label='Merkel KDtree')
+    plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.xlabel('Block Size')
+    plt.ylabel('Time(s)')
     plt.legend(loc='best')
     plt.savefig('experiment2_time.png')
 
     plt.figure(4)
     plt.plot(blocksizes, rtreep_nodecount, color='blue',label='Verkel R*tree')
     plt.plot(blocksizes, rtreea_nodecount, color='red',label='Verkel AR*tree')
+    plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.xlabel('Block Size')
+    plt.ylabel('Number of Nodes')
     plt.legend(loc='best')
     plt.savefig('experiment2_count.png')
 
@@ -401,7 +417,11 @@ def experiment3():
     plt.plot(max_children_nums, rtree_time_optima['center'], color='blue',label="center")
     plt.plot(max_children_nums, rtree_time_optima['gaussian'], color='red', label="gaussian")
     plt.plot(max_children_nums, rtree_time_optima['uniform'], color='green',label="uniform")
-    plt.plot(max_children_nums, rtree_time_optima['grid'], color='black', label="grid")
+    plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.xlabel('max number of child nodes')
+    plt.ylabel('Time(s)')
+    #plt.plot(max_children_nums, rtree_time_optima['grid'], color='black', label="grid")
     plt.legend(loc='best')
     plt.savefig('experiment3_time.png')
 
@@ -409,7 +429,11 @@ def experiment3():
     plt.plot(max_children_nums, rtree_count_optima['center'], color='blue', label="center")
     plt.plot(max_children_nums, rtree_count_optima['gaussian'], color='red', label="gaussian")
     plt.plot(max_children_nums, rtree_count_optima['uniform'], color='green', label="uniform")
-    plt.plot(max_children_nums, rtree_count_optima['grid'], color='black', label="grid")
+    #plt.plot(max_children_nums, rtree_count_optima['grid'], color='black', label="grid")
+    plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.xlabel('max number of child nodes')
+    plt.ylabel('Number of Nodes')
     plt.legend(loc="best")
     plt.savefig('experiment3_count.png')
 
@@ -485,6 +509,10 @@ def experiment4():
     plt.plot(blocksizes, traj_lengths,label="Trajectory")
     plt.plot(blocksizes, block_dag_lengths,label='BlockDAG')
     plt.plot(blocksizes, mpt_lengths,label='MPT')
+    plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
+    plt.xlabel('Block size')
+    plt.ylabel('Proof length')
     plt.legend(loc='best')
     plt.savefig('experiment4_proof.png')
 
@@ -493,8 +521,8 @@ def experiment4():
 
 
 if __name__ == '__main__':
-    #experiment1()
+    experiment1()
     #experiment2()
-    experiment3()
+    #experiment3()
     #experiment4()
 

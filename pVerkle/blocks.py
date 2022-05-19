@@ -342,9 +342,9 @@ class BlockChain:
                 mbr.update(j,center[j]-length/2,center[j]+length/2)
             r.append(mbr)
         return r
-    def optima(self):
+    def optima(self,refused=True):
         for i, b in self.blocks.items():
-            b.trantrieRoot.rearrage_all()
+            b.trantrieRoot.rearrage_all(refused)
 
 
 

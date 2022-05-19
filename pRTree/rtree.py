@@ -285,10 +285,23 @@ class RTree:
             else:
                 self.rearrage_nodes(g,results)
 
-    def rearrage_nodes(self, nodes, results=[]):
+    def rearrage_nodes(self, nodes, results=[],refused=True):
         mbrs = [n.mbr for n in nodes]
         # 寻找所有分裂方案
         plans = geo.Rectangle.groupby(tree=self, mbrs=[e.mbr for e in nodes], mode='')
+
+        # 计算分组的访问频率的组间方差
+        for p in plans:
+            g1, g2 = p['g'][0], p['g'][1]
+            g1, g2 = [nodes[g] for g in g1], [nodes[g] for g in g2]
+            p['cov'] = Collections.group_cov([g.ref for g in g1], [g.ref for g in g2])
+            p['g'] = [g1, g2]
+
+        # 选择组间方差大的
+        if refused:
+            plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
+            maxcov = plans[0]['cov']
+            plans = [p for p in plans if abs(maxcov - p['cov']) <= 5.0]
 
         # 选择总面积小的
         plans = sorted(plans, key=lambda p: p['area'])
@@ -297,12 +310,11 @@ class RTree:
 
         # 选择重叠面积最小的
         plans = sorted(plans, key=lambda p: p['overlop'])
-        min_overlop = plans[0]['overlop']
-        plans = [p for p in plans if abs(min_overlop - p['overlop']) <= 0.05]
-
-        # 选择组间方差大的
-        plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
         optima = plans[0]
+
+
+
+        # 对分组后的两组的数量分别检查是否仍旧超过阈值
         for i in range(2):
             g = optima['g'][i]
             if len(g) <= self.context.max_children_num:
@@ -312,7 +324,7 @@ class RTree:
 
 
 
-    def rearrage_leafs(self, entries, leafs):
+    def rearrage_leafs(self, entries, leafs,refused=True):
         """
         根据数据对象重新安排所有的叶子节点
         """
@@ -326,13 +338,14 @@ class RTree:
             p['cov'] = Collections.group_cov([g.ref for g in g1], [g.ref for g in g2])
             p['g'] = [g1,g2]
 
+        # 选择组间方差大的
+        if refused:
+            plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
+            maxcov = plans[0]['cov']
+            plans = [p for p in plans if abs(maxcov - p['cov']) <= 5.0]
+
         # 按照重叠面积升序排序
         plans = sorted(plans, key=lambda p: p['overlop'])
-        min_overlop = plans[0]['overlop']
-        plans = [p for p in plans if abs(min_overlop - p['overlop']) <= 0.05]
-
-        # 选择组间方差大的
-        plans = sorted(plans, key=lambda p: p['cov'],reverse=True)
         optima = plans[0]
 
         # 对分组后的两组的数量分别检查是否仍旧超过阈值
@@ -381,17 +394,17 @@ class RTree:
                 self.rearrage_leafs(optima['g'][i],leafs)
         return leafs
 
-    def rearrage_all(self):
+    def rearrage_all(self,refused=True):
 
         oldalgs = RTree.algs.copy()
         RTree.algs['split_node'] = alg.split_node_ref
 
         entries = self.all_entries()
         nodes = []
-        self.rearrage_leafs(entries,nodes)
+        self.rearrage_leafs(entries,nodes,refused)
         results = []
         while True:
-            self.rearrage_nodes(nodes,results)
+            self.rearrage_nodes(nodes,results,refused)
             parents = [RNode(mbr=None,parent=None,children=r,entries=[]) for r in results]
             if len(parents)<=self.context.max_children_num:
                 self.root = RNode(mbr=None,parent=None,children=parents,entries=[])
