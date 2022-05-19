@@ -358,9 +358,10 @@ def experiment3():
     max_children_nums = [4,8,16,32,48,64,80,96,108,128]
     blocksizes = [90]
     itercount = 1
-    querycount = 5000
-    region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
-                     'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [1., 1., 1.]}
+    querycount = 6000
+    #region_params = {'geotype_probs': [0.9, 0.0, 0.1], 'length_probs': [0.6, 0.3, 0.1],
+    #                 'lengthcenters': [0.001, 0.005, 0.01], 'lengthscales': [0.05, 0.05, 0.05]}
+    region_params = {}
 
     rtree_time_init = {'center':[],'gaussian':[],'uniform':[],'grid':[],'nonfre':[]}
     rtree_time_optima = {'center': [], 'gaussian': [], 'uniform': [], 'grid': [], 'nonfre': []}
