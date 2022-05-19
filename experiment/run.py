@@ -48,12 +48,14 @@ def _initdata(context,region_params={}):
         tr.account = accs[i]
     return transactions
 
-def query_transaction(context,blocksizes,content='all',query_param={},region_params={},query_mbrs = []):
+def query_transaction(context,blocksizes,content='all',query_param={},region_params={},query_mbrs = [],refused=True):
     """
     一次查询实验
     :param conetxt 配置信息
     :param blocksizes 区块大小列表
     :param region_params 生成立方体实验数据参数
+    :param query_param   生成查询数据所需参数，如果query_mbrs有效，则该参数不用
+    :param refused       在优化时是否使用访问频率
     """
     # 读取数据
     transactions = _initdata(context,region_params)
@@ -85,7 +87,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
 
         if content == 'all' or content.__contains__('optima'):
             # 根据查询优化
-            chain.optima(refused=True)
+            chain.optima(refused=refused)
             logging.info("VRTree区块优化完成，交易VR*-tree节点总数=" + str(chain.tran_nodecount()) + ",平均=" + str(
                 chain.tran_nodecount() / len(chain.blocks)) + ",深度=" + str(chain.header.trantrieRoot.depth))
 
@@ -150,7 +152,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
     #plt.plot(blocksizes, rtreea,color='red')
     #plt.plot(blocksizes,kdtree,color='black')
 
-def run_query_transaction(context,count=10,blocksizes=None,content='all',query_param={},region_params={},query_mbrs = []):
+def run_query_transaction(context,count=10,blocksizes=None,content='all',query_param={},region_params={},query_mbrs = [],refused=True):
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = [[]] * len(blocksizes), [[]] * len(blocksizes), [
         []] * len(blocksizes), [[]] * len(blocksizes), [[]] * len(blocksizes),[[]] * len(blocksizes)
     for i in range(count):
@@ -307,15 +309,15 @@ def experiment2():
     context = Configuration(max_children_num=8, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
     query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
-    blocksizes = [30, 50, 70, 90, 110, 130, 150, 170,190,210,230,250]
+    blocksizes = [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250]
 
-    region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
-                     'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [1., 1., 1.]}
-    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,_ = run_query_transaction(context, count=1,
-                                                                                       blocksizes=blocksizes,
-                                                                                       content='all',
-                                                                                       query_param=query_param,
-                                                                                       region_params=region_params)
+    region_params = {'geotype_probs': [0.9, 0.0, 0.1], 'length_probs': [0.6, 0.3, 0.1],
+                     'lengthcenters': [0.001, 0.005, 0.01], 'lengthscales': [0.05, 0.05, 0.05]}
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree, _ = run_query_transaction(context, count=1,
+                                                                                          blocksizes=blocksizes,
+                                                                                          content='all',
+                                                                                          query_param=query_param,
+                                                                                          region_params=region_params)
 
     log_path = 'experiment201.csv'
     file = open(log_path, 'w', encoding='utf-8', newline='')
@@ -328,9 +330,9 @@ def experiment2():
     file.close()
 
     plt.figure(3)
-    #plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
-    plt.plot(blocksizes, rtreea, color='red',label='Verkel AR*tree')
-    plt.plot(blocksizes, kdtree, color='black',label='Merkel KDtree')
+    # plt.plot(blocksizes, rtreep, color='blue',label='Verkel R*tree')
+    plt.plot(blocksizes, rtreea, color='red', label='Verkel AR*tree')
+    plt.plot(blocksizes, kdtree, color='black', label='Merkel KDtree')
     plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
     plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
     plt.xlabel('Block Size')
@@ -339,8 +341,8 @@ def experiment2():
     plt.savefig('experiment2_time.png')
 
     plt.figure(4)
-    plt.plot(blocksizes, rtreep_nodecount, color='blue',label='Verkel R*tree')
-    plt.plot(blocksizes, rtreea_nodecount, color='red',label='Verkel AR*tree')
+    plt.plot(blocksizes, rtreep_nodecount, color='blue', label='Verkel R*tree')
+    plt.plot(blocksizes, rtreea_nodecount, color='red', label='Verkel AR*tree')
     plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
     plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
     plt.xlabel('Block Size')
@@ -360,16 +362,17 @@ def experiment3():
     region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
                      'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [1., 1., 1.]}
 
-    rtree_time_init = {'center':[],'gaussian':[],'uniform':[],'grid':[],'avg':[]}
-    rtree_time_optima = {'center': [], 'gaussian': [], 'uniform': [], 'grid': [], 'avg': []}
-    rtree_count_init = {'center': [], 'gaussian': [], 'uniform': [], 'grid': [], 'avg': []}
-    rtree_count_optima = {'center': [], 'gaussian': [], 'uniform': [], 'grid': [],'avg':[]}
+    rtree_time_init = {'center':[],'gaussian':[],'uniform':[],'grid':[],'nonfre':[]}
+    rtree_time_optima = {'center': [], 'gaussian': [], 'uniform': [], 'grid': [], 'nonfre': []}
+    rtree_count_init = {'center': [], 'gaussian': [], 'uniform': [], 'grid': [], 'nonfre': []}
+    rtree_count_optima = {'center': [], 'gaussian': [], 'uniform': [], 'grid': [],'nonfre':[]}
 
     query_param_dict = dict(
                         center = dict(count=querycount, sizes=[1,1,1], posrandom=100, lengthcenter=0.1, lengthscale=0.05),
                         gaussian = dict(count=querycount, sizes=[2,2,2], posrandom=100, lengthcenter=0.1, lengthscale=0.05),
                         uniform = dict(count=querycount, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.1, lengthscale=0.0),
-                        grid= dict(count=querycount, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=-1.0)
+                        grid= dict(count=querycount, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=-1.0),
+                        nonfre = dict(count=querycount, sizes=[2,2,2], posrandom=100, lengthcenter=0.1, lengthscale=0.05)
                         )
     query_mbrs = {}
     for key, query_param in query_param_dict.items():
@@ -385,7 +388,7 @@ def experiment3():
             logging.info('query with :' + key)
             r1, n1, r2, n2, _, _ = run_query_transaction(context, count=itercount,blocksizes=blocksizes,
                                                          content='rtree,optima',query_param=query_param,
-                                                         region_params=region_params,query_mbrs=query_mbrs[key])
+                                                         region_params=region_params,query_mbrs=query_mbrs[key],refused=False if key=='nonfre' else True)
 
             rtree_time_init[key].append(r1[0])
             rtree_time_optima[key].append(r2[0])
@@ -417,6 +420,7 @@ def experiment3():
     plt.plot(max_children_nums, rtree_time_optima['center'], color='blue',label="center")
     plt.plot(max_children_nums, rtree_time_optima['gaussian'], color='red', label="gaussian")
     plt.plot(max_children_nums, rtree_time_optima['uniform'], color='green',label="uniform")
+    plt.plot(max_children_nums, rtree_time_optima['nonfre'], color='black', label="non-fre")
     plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
     plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
     plt.xlabel('max number of child nodes')
@@ -429,6 +433,7 @@ def experiment3():
     plt.plot(max_children_nums, rtree_count_optima['center'], color='blue', label="center")
     plt.plot(max_children_nums, rtree_count_optima['gaussian'], color='red', label="gaussian")
     plt.plot(max_children_nums, rtree_count_optima['uniform'], color='green', label="uniform")
+    plt.plot(max_children_nums, rtree_count_optima['nofre'], color='black', label="no-fre")
     #plt.plot(max_children_nums, rtree_count_optima['grid'], color='black', label="grid")
     plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
     plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
@@ -469,7 +474,7 @@ def experiment4():
         logging.info('创建MPT...')
         dataLoader = PocemonLoader()
         account_names, _ = dataLoader.create_account_name(blocksize, context.account_length)
-        mpt = None #MerklePatriciaTree(xh=i+1,from_scratch=True)
+        mpt = None # MerklePatriciaTree(xh=i+1,from_scratch=True)
 
         for name in account_names:
             mpt.insert(name)
@@ -521,8 +526,8 @@ def experiment4():
 
 
 if __name__ == '__main__':
-    experiment1()
+    #experiment1()
     #experiment2()
-    #experiment3()
+    experiment3()
     #experiment4()
 
