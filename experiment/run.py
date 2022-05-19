@@ -125,7 +125,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
             begin = time.time()
             for i,query_range in enumerate(query_ranges):
                 min_point, max_point, t_start, t_end = query_range['minp'],query_range['maxp'],query_range['t_start'],query_range['t_end']
-                min_point, max_point = analysis_utils.__to_Cartesian_rect(min_point, max_point)
+                min_point, max_point = analysis_utils.__to_Cartesian_rect(min_point, max_point,[t_start, t_end])
                 rng = analysis_utils.__measure_time(sob.kd_range, 1, block_dag, min_point, max_point, t_start, t_end)
 
             kdtree.append(time.time() - begin)
@@ -317,7 +317,7 @@ def experiment2():
                                                                                        query_param=query_param,
                                                                                        region_params=region_params)
 
-    log_path = 'experiment2.csv'
+    log_path = 'experiment201.csv'
     file = open(log_path, 'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(file)
     csv_writer.writerow(rtreep)
@@ -521,8 +521,8 @@ def experiment4():
 
 
 if __name__ == '__main__':
-    #experiment1()
-    experiment2()
+    experiment1()
+    #experiment2()
     #experiment3()
     #experiment4()
 
