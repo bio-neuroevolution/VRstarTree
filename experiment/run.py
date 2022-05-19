@@ -311,7 +311,7 @@ def experiment2():
     query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
     blocksizes = [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250]
 
-    region_params = {'geotype_probs': [0.9, 0.0, 0.1], 'length_probs': [0.6, 0.3, 0.1],
+    region_params = {'geotype_probs': [0.9, 0.0, 0.1], 'length_probs': [0.7, 0.2, 0.1],
                      'lengthcenters': [0.001, 0.005, 0.01], 'lengthscales': [0.05, 0.05, 0.05]}
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree, _ = run_query_transaction(context, count=1,
                                                                                           blocksizes=blocksizes,
@@ -319,7 +319,7 @@ def experiment2():
                                                                                           query_param=query_param,
                                                                                           region_params=region_params)
 
-    log_path = 'experiment201.csv'
+    log_path = 'experiment2.csv'
     file = open(log_path, 'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(file)
     csv_writer.writerow(rtreep)
@@ -528,7 +528,7 @@ def experiment4():
 
 if __name__ == '__main__':
     #experiment1()
-    #experiment2()
-    experiment3()
+    experiment2()
+    #experiment3()
     #experiment4()
 

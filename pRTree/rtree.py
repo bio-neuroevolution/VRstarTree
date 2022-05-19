@@ -397,7 +397,10 @@ class RTree:
     def rearrage_all(self,refused=True):
 
         oldalgs = RTree.algs.copy()
-        RTree.algs['split_node'] = alg.split_node_ref
+        if refused:
+            RTree.algs['split_node'] = alg.split_node_ref
+        else:
+            RTree.algs['split_node'] = alg.split_node_rstar
 
         entries = self.all_entries()
         nodes = []
