@@ -434,7 +434,7 @@ def experiment3():
     plt.plot(max_children_nums, rtree_count_optima['center'], color='blue', label="center")
     plt.plot(max_children_nums, rtree_count_optima['gaussian'], color='red', label="gaussian")
     plt.plot(max_children_nums, rtree_count_optima['uniform'], color='green', label="uniform")
-    plt.plot(max_children_nums, rtree_count_optima['nofre'], color='black', label="no-fre")
+    plt.plot(max_children_nums, rtree_count_optima['nofre'], color='black', label="non-fre")
     #plt.plot(max_children_nums, rtree_count_optima['grid'], color='black', label="grid")
     plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
     plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
