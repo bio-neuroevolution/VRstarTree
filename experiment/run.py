@@ -307,7 +307,7 @@ def experiment2():
     context = Configuration(max_children_num=8, max_entries_num=8, account_length=8, account_count=200,
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
     query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
-    blocksizes = [30, 50, 70, 90, 110, 130, 150, 170]
+    blocksizes = [30, 50, 70, 90, 110, 130, 150, 170,190,210,230,250]
 
     region_params = {'geotype_probs': [0.2, 0.0, 0.8], 'length_probs': [0.5, 0.3, 0.2],
                      'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [1., 1., 1.]}
@@ -521,8 +521,8 @@ def experiment4():
 
 
 if __name__ == '__main__':
-    experiment1()
-    #experiment2()
+    #experiment1()
+    experiment2()
     #experiment3()
     #experiment4()
 
