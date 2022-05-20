@@ -109,6 +109,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
             settings = dict(repeat_times=1, tr=60, D=3, bs=blocksize, alpha=10)
             settings.update(region_params)
             block_dag = simulation.GeneratorDAGchain.generate(**settings)
+            logging.info("创建BlockDAG完成, depth="+str(block_dag.merkle_kd_trees[1].depth))
 
             # 创建查询
             query_ranges = []
@@ -125,13 +126,15 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
             # 执行查询
             logging.info("BlockDAG执行查询...")
             begin = time.time()
+            result_size = 0
             for i,query_range in enumerate(query_ranges):
                 min_point, max_point, t_start, t_end = query_range['minp'],query_range['maxp'],query_range['t_start'],query_range['t_end']
                 min_point, max_point = analysis_utils.__to_Cartesian_rect(min_point, max_point,[t_start, t_end])
                 rng = analysis_utils.__measure_time(sob.kd_range, 1, block_dag, min_point, max_point, t_start, t_end)
+                result_size += rng.loc[0][1]
 
             kdtree.append(time.time() - begin)
-            logging.info("BlockDAG交易查询消耗:" + str(kdtree[-1]))
+            logging.info("BlockDAG交易查询消耗:" + str(kdtree[-1])+",size="+str(result_size))
         else:
             kdtree.append(0.)
 
@@ -216,6 +219,7 @@ def create_query(count=1,sizes:list=[2,2,2],posrandom=100,lengthcenter=0.05,leng
         center = [0.5,0.5,0.5]
         for i in range(count):
             length = np.random.normal(loc=lengthcenter, scale=lengthscale, size=1)
+            if length <= 0: length = lengthcenter
             mbr = geo.Rectangle(3)
             mbr.update(0, 0.5 - length /2,  0.5 + length / 2)
             mbr.update(1, 0.5 - length / 2, 0.5 + length / 2)
@@ -237,6 +241,7 @@ def create_query(count=1,sizes:list=[2,2,2],posrandom=100,lengthcenter=0.05,leng
         for i in range(len(center)):
             center[i] += (np.random.random() * 2 - 1) / posrandom
         length = np.random.normal(loc=lengthcenter,scale=lengthscale,size=1)
+        if length <= 0:length = lengthcenter
         mbr = geo.Rectangle(dimension=len(sizes))
         for j in range(len(sizes)):
             mbr.update(j,center[j]-length/2,center[j]+length/2)
@@ -310,12 +315,13 @@ def experiment2():
                             select_nodes_func='', merge_nodes_func='', split_node_func='')
     query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
     blocksizes = [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250]
+    #blocksizes = [50,250]
 
-    region_params = {'geotype_probs': [0.9, 0.0, 0.1], 'length_probs': [0.7, 0.2, 0.1],
-                     'lengthcenters': [0.001, 0.005, 0.01], 'lengthscales': [0.05, 0.05, 0.05]}
-    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree, _ = run_query_transaction(context, count=1,
+    region_params = {'geotype_probs': [0.8, 0.0, 0.2], 'length_probs': [0.5, 0.3, 0.2],
+                     'lengthcenters': [0.01, 0.05, 0.1], 'lengthscales': [0.5, 0.5, 0.5]}
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree, _ = run_query_transaction(context, count=5,
                                                                                           blocksizes=blocksizes,
-                                                                                          content='all',
+                                                                                          content='blockdag',
                                                                                           query_param=query_param,
                                                                                           region_params=region_params)
 
