@@ -411,7 +411,7 @@ class RTree:
             parents = [RNode(mbr=None,parent=None,children=r,entries=[]) for r in results]
             if len(parents)<=self.context.max_children_num:
                 self.root = RNode(mbr=None,parent=None,children=parents,entries=[])
-                return
+                break
             results,nodes = [],parents
 
 

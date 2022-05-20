@@ -122,7 +122,7 @@ class Block:
         rs = {'context': self.context}
         rs.update({'nonce':self.nonce,'parent_hash': str(self.parent_hash),'next_hash':str(self.next_hash)})
         rs.update({'start_time':str(self.start_time),'end_time':str(self.end_time),'timestamp':str(self.timestamp)})
-        rs.update({'statetrieRoot':self.statetrieRoot.serialize()})
+        #rs.update({'statetrieRoot':self.statetrieRoot.serialize()})
         rs.update({'trantrieRoot': self.trantrieRoot.serialize()})
         #rs.update({'trajetrieRoot': self.trajetrieRoot.serialize()})
         return rs
@@ -135,9 +135,9 @@ class Block:
 
     def _create_vpt(self,transactions):
         accounts = self._create_accounts(transactions)
-        vpt = VerklePatriciaTree()
-        for acc in accounts:
-            vpt.insert(acc.id,acc)
+        vpt = None # VerklePatriciaTree()
+        #for acc in accounts:
+        #    vpt.insert(acc.id,acc)
         self.statetrieRoot = vpt
         return vpt
 

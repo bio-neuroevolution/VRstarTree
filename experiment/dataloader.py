@@ -12,7 +12,7 @@ class PocemonLoader:
     def __init__(self):
         pass
     def refresh(self):
-        hk_poke_json = glob.glob('../data/pocemon_hk/hk-*.json')
+        hk_poke_json = glob.glob('../../data/pocemon_hk/hk-*.json')
 
         def load_poke_json(pokefile):
             return pd.read_json(pokefile).rename(columns={'a': 'lat', 'i': 'type', 't': 'ts', 'o': 'lon'})
