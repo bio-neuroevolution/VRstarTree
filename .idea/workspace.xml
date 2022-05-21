@@ -2,17 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ea67747e-a3b7-4725-aa64-be4a9df1c855" name="Default Changelist" comment="3">
-      <change afterPath="$PROJECT_DIR$/experiment/query.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiment/dataloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/experiment/dataloader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiment/plot.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiment/run.log" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiment/run.log.20220505.log" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiment/run.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pRTree/rtree.py" beforeDir="false" afterPath="$PROJECT_DIR$/pRTree/rtree.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pVerkle/blocks.py" beforeDir="false" afterPath="$PROJECT_DIR$/pVerkle/blocks.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/experiment/e3/experiment3.py" beforeDir="false" afterPath="$PROJECT_DIR$/experiment/e3/experiment3.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/bin/activate" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/bin/activate.csh" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/bin/activate.fish" beforeDir="false" />
@@ -219,7 +210,6 @@
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_hash/backends/pycryptodome.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_hash/backends/pysha3.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_hash/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_hash/py.typed" beforeDir="false" afterPath="$PROJECT_DIR$/experiment/e1/experiment1.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_hash/utils.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_typing-3.0.0.dist-info/INSTALLER" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_typing-3.0.0.dist-info/LICENSE" beforeDir="false" />
@@ -235,7 +225,6 @@
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_typing/enums.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_typing/ethpm.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_typing/evm.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_typing/py.typed" beforeDir="false" afterPath="$PROJECT_DIR$/experiment/e2/experiment2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_utils-2.0.0.dist-info/INSTALLER" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_utils-2.0.0.dist-info/LICENSE" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_utils-2.0.0.dist-info/METADATA" beforeDir="false" />
@@ -261,7 +250,6 @@
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_utils/logging.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_utils/module_loading.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_utils/numeric.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_utils/py.typed" beforeDir="false" afterPath="$PROJECT_DIR$/experiment/e3/experiment3.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_utils/toolz.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_utils/types.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/eth_utils/typing/__init__.py" beforeDir="false" />
@@ -334,7 +322,6 @@
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/fontTools/misc/macCreatorType.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/fontTools/misc/macRes.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/fontTools/misc/plistlib/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/fontTools/misc/plistlib/py.typed" beforeDir="false" afterPath="$PROJECT_DIR$/experiment/e4/experiment4.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/fontTools/misc/psCharStrings.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/fontTools/misc/psLib.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.7/site-packages/fontTools/misc/psOperators.py" beforeDir="false" />
@@ -6375,6 +6362,11 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="ChangesViewManager">
+    <option name="groupingKeys">
+      <option value="directory" />
+    </option>
+  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
@@ -6549,7 +6541,14 @@
       <option name="project" value="LOCAL" />
       <updated>1653063244909</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="3">
+      <created>1653081705159</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1653081705159</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
