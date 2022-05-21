@@ -102,8 +102,9 @@ class Rectangle(Geometry):
     def unions(cls,gs):
         r = EMPTY_RECT
         if gs is None or len(gs) <= 0: return r
-        for g in gs:
-            r = r.union(g)
+        r = Rectangle(dimension=gs[0].dimentsion)
+        for i in range(r.dimension):
+            r.update(i,np.min([g.lower(i) for g in gs]),np.max([g.upper(i) for g in gs]))
         return r
     def volume(self)->float:
         if self.empty():return 0

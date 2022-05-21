@@ -96,7 +96,8 @@ def experiment3(count = 1,
     labels = [key+'-R*1',key+'-Non-ref',key+'-R*2',key+'-Ref']
 
     count = 1
-    for key, values in rtree_time.items():
+    for key in query_param_dict.keys():
+        values = rtree_time[key]
         plt.subplot(int('24' + str(count)))
         count += 1
         norefs = [(d[0][0] - d[1][0]) for d in values]
@@ -110,7 +111,8 @@ def experiment3(count = 1,
         plt.ylabel('Time(s)')
         plt.legend(loc='best')
 
-    for key, values in rtree_count.items():
+    for key in query_param_dict.keys():
+        values = rtree_count[key]
         plt.subplot(int('24' + str(count)))
         count += 1
         norefs = [(d[0][0] - d[1][0]) for d in values]
