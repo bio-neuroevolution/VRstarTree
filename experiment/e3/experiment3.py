@@ -27,13 +27,15 @@ logging = LogHandler('e3')
 
 def experiment3(count = 1,
                 query_param_dict = dict(
-                        center = dict(count=6000, sizes=[1,1,1], posrandom=100, lengthcenter=0.1, lengthscale=0.05),
-                        gaussian = dict(count=6000, sizes=[2,2,2], posrandom=100, lengthcenter=0.1, lengthscale=0.05),
-                        uniform = dict(count=6000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.1, lengthscale=0.0),
-                        grid= dict(count=6000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=-1.0)
+                        #center = dict(count=6000, sizes=[1,1,1], posrandom=100, lengthcenter=0.1, lengthscale=0.05),
+                        gaussian = dict(count=6000, sizes=[2,2,2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
+                        #uniform = dict(count=6000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.1, lengthscale=0.0),
+                        #grid= dict(count=6000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=-1.0)
                         ),
-                max_children_nums = [4,8,16,32,48,64,80,96,108,128],
+                max_children_nums = [8], #[4,8,16,32,48,64,80,96,108,128],
                 blocksizes = [80],
+                fig='show',
+                figname='experiment31.png',
                 region_params={}):
     '''
         实现Verkle AR*-tree、Verkel R*-tree在不同查询分布下的比较
@@ -56,7 +58,7 @@ def experiment3(count = 1,
         query_mbrs[key] = mbrs
 
     for i,max_children_num in enumerate(max_children_nums):
-        logging.info(max_children_num=+str(max_children_num))
+        logging.info("max_children_num="+str(max_children_num))
         context = Configuration(max_children_num=max_children_num, max_entries_num=max_children_num, account_length=8, account_count=200,
                                 select_nodes_func='', merge_nodes_func='', split_node_func='')
 
@@ -93,29 +95,47 @@ def experiment3(count = 1,
     colors = ['black','blue','black','red']
     labels = [key+'-R*1',key+'-Non-ref',key+'-R*2',key+'-Ref']
 
-    no = 0
-    for key, query_param in query_param_dict.items():
-        no += 1
-        plt.figure(no)
-        for i in range(4):
-            plt.plot(max_children_nums, [d[i] for d in rtree_time[key]], color='blue', label=labels[i])
+    count = 1
+    for key, values in rtree_time.items():
+        plt.subplot(int('24' + str(count)))
+        count += 1
+        norefs = [(d[0][0] - d[1][0]) for d in values]
+        refs = [(d[2][0] - d[3][0]) for d in values]
+
+        plt.plot(max_children_nums, norefs, color='blue', label=key + "_noref")
+        plt.plot(max_children_nums, refs, color='red', label=key + "_ref")
         plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
         plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
         plt.xlabel('max number of child nodes')
         plt.ylabel('Time(s)')
         plt.legend(loc='best')
-        plt.savefig('experiment3_time_'+key+'.png')
 
-        no += 1
-        plt.figure(no)
-        for i in range(4):
-            plt.plot(max_children_nums, [d[i] for d in rtree_count[key]], color='blue', label=labels[i])
+    for key, values in rtree_count.items():
+        plt.subplot(int('24' + str(count)))
+        count += 1
+        norefs = [(d[0][0] - d[1][0]) for d in values]
+
+        # max, min = np.max(norefs), np.min(norefs)
+        # norefs = [(d - min) / (max - min) for d in norefs]
+        refs = [(d[2][0] - d[3][0]) for d in values]
+
+        print(key)
+        print(norefs)
+        print(refs)
+        # max, min = np.max(refs), np.min(refs)
+        # refs = [(d - min) / (max - min) for d in refs]
+        plt.plot(max_children_nums, norefs, color='blue', label=key + "_noref")
+        plt.plot(max_children_nums, refs, color='red', label=key + "_ref")
         plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
         plt.grid(which='major', axis='y', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
         plt.xlabel('max number of child nodes')
         plt.ylabel('number of nodes')
         plt.legend(loc='best')
-        plt.savefig('experiment3_count_' + key + '.png')
+
+    if fig.__contains__('save'):
+        plt.savefig(figname)
+    if fig.__contains__('show'):
+        plt.show()
 
 def drawfig():
 
@@ -242,5 +262,5 @@ def drawfig():
 
 
 if __name__ == '__main__':
-    #experiment3()
-    drawfig()
+    experiment3()
+    #drawfig()
