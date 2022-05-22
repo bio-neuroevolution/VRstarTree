@@ -10,7 +10,9 @@ from node import Entry, RNode
 from utils import Configuration
 from utils import Collections
 from graphviz import Digraph, nohtml
+from log import LogHandler
 
+logging = LogHandler('rtree')
 
 class RTree:
     MAX_CHILDREN_DEFAULT = 16              #缺省最大子节点树
@@ -302,7 +304,7 @@ class RTree:
             plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
             maxcov = plans[0]['cov']
             if maxcov > 0:
-                print('maxcov='+str(maxcov)+",ps="+str([p['cov'] for p in plans]))
+                logging.info('maxcov='+str(maxcov)+",covs="+str([p['cov'] for p in plans]))
             plans = [p for p in plans if abs(maxcov - p['cov']) <= 5.0]
 
 
@@ -345,6 +347,8 @@ class RTree:
         if refused:
             plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
             maxcov = plans[0]['cov']
+            if maxcov > 0:
+                logging.info('maxcov='+maxcov+',covs='+str([p['cov'] for p in plans]))
             plans = [p for p in plans if abs(maxcov - p['cov']) <= 5.0]
 
         # 按照重叠面积升序排序
