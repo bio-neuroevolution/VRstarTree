@@ -145,7 +145,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
             for mbr in query_mbrs:
                 scancount += len([tx for tx in transactions if tx.mbr.isOverlop(mbr)])
             scan.append(time.time() - begin)
-            logging.info("scan交易查询消耗:" + str(scan[-1])+',size='+scancount)
+            logging.info("scan交易查询消耗:" + str(scan[-1])+',size='+str(scancount))
         else:
             scan.append(0)
 
