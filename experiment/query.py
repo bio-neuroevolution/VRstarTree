@@ -223,7 +223,7 @@ def create_query(count=1,sizes:list=[2,2,2],posrandom=100,lengthcenter=0.05,leng
             mbr = geo.Rectangle(3)
             mbr.update(0, 0.5 - length /2,  0.5 + length / 2)
             mbr.update(1, 0.5 - length / 2, 0.5 + length / 2)
-            mbr.update(2, 0.5 - length / 2, 0.5 + length / 2)
+            mbr.update(2, 0.5, 1.0)
             r.append(mbr)
         return r
 
