@@ -98,10 +98,11 @@ def experiment3(count = 1,
     count = 1
     for key in query_param_dict.keys():
         values = rtree_time[key]
+        values = [[d[0][0] if d[0][0] != 0 else 1, d[1][0], d[2][0] if d[2][0] != 0 else 1, d[3][0]] for d in values]
         plt.subplot(int('24' + str(count)))
         count += 1
-        norefs = [(d[0][0] - d[1][0])/d[0][0] for d in values]
-        refs = [(d[2][0] - d[3][0])/d[2][0] for d in values]
+        norefs = [(d[0] - d[1])/d[0] for d in values]
+        refs = [(d[2] - d[3])/d[2] for d in values]
         print('norefs-time='+ str(norefs))
         print('refs-time='+str(refs))
 
@@ -115,10 +116,11 @@ def experiment3(count = 1,
 
     for key in query_param_dict.keys():
         values = rtree_count[key]
+        values = [[d[0][0] if d[0][0] != 0 else 1, d[1][0], d[2][0] if d[2][0] != 0 else 1, d[3][0]] for d in values]
         plt.subplot(int('24' + str(count)))
         count += 1
-        norefs = [(d[0][0] - d[1][0])/d[0][0] for d in values]
-        refs = [(d[2][0] - d[3][0])/d[2][0] for d in values]
+        norefs = [(d[0] - d[1])/d[0] for d in values]
+        refs = [(d[2] - d[3])/d[2] for d in values]
 
         print('norefs-count=' + str(norefs))
         print('refs-count=' + str(refs))
