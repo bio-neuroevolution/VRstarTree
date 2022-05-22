@@ -75,12 +75,12 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
             logging.info("VRTree创建区块完成，交易VR*-tree节点总数=" + str(chain.tran_nodecount()) + ",平均="+str(chain.tran_nodecount()/len(chain.blocks))+",深度="+str(chain.header.trantrieRoot.depth))
 
             # 执行查询
-            begin = time.time()
+            begin,size = time.time(),0
             for mbr in query_mbrs:
-                chain.query_tran(mbr)
+                size += len(chain.query_tran(mbr))
             rtreep.append(time.time() - begin)
             rtreep_nodecount.append(chain.query_tran_node_count)
-            logging.info("VRTree交易查询消耗（优化前）:" + str(rtreep[-1])+'，访问节点数：'+str(chain.query_tran_node_count))
+            logging.info("VRTree交易查询消耗（优化前）:" + str(rtreep[-1])+'，访问节点数：'+str(chain.query_tran_node_count)+",size="+str(size/len(query_mbrs)))
         else:
             rtreep.append(0.)
             rtreep_nodecount.append(0)
@@ -93,12 +93,12 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
 
 
             # 第二次交易查询
-            begin = time.time()
+            begin,size = time.time(),0
             for mbr in query_mbrs:
-                chain.query_tran(mbr)
+                size += len(chain.query_tran(mbr))
             rtreea.append(time.time() - begin)
             rtreea_nodecount.append(chain.query_tran_node_count)
-            logging.info("VRTree交易查询消耗（优化后）:" + str(rtreea[-1])+",访问节点数："+str(chain.query_tran_node_count))
+            logging.info("VRTree交易查询消耗（优化后）:" + str(rtreea[-1])+",访问节点数："+str(chain.query_tran_node_count)+',size='+str(size/len(query_mbrs)))
         else:
             rtreea.append(0.)
             rtreea_nodecount.append(0)
@@ -145,7 +145,7 @@ def query_transaction(context,blocksizes,content='all',query_param={},region_par
             for mbr in query_mbrs:
                 scancount += len([tx for tx in transactions if tx.mbr.isOverlop(mbr)])
             scan.append(time.time() - begin)
-            logging.info("scan交易查询消耗:" + str(scan[-1]))
+            logging.info("scan交易查询消耗:" + str(scan[-1])+',size='+scancount)
         else:
             scan.append(0)
 

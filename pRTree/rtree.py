@@ -301,7 +301,10 @@ class RTree:
         if refused:
             plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
             maxcov = plans[0]['cov']
+            if maxcov > 0:
+                print('maxcov='+str(maxcov)+",ps="+str([p['cov'] for p in plans]))
             plans = [p for p in plans if abs(maxcov - p['cov']) <= 5.0]
+
 
         # 选择总面积小的
         plans = sorted(plans, key=lambda p: p['area'])

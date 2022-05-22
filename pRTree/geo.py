@@ -102,7 +102,7 @@ class Rectangle(Geometry):
     def unions(cls,gs):
         r = EMPTY_RECT
         if gs is None or len(gs) <= 0: return r
-        r = Rectangle(dimension=gs[0].dimentsion)
+        r = Rectangle(dimension=gs[0].dimension)
         for i in range(r.dimension):
             r.update(i,np.min([g.lower(i) for g in gs]),np.max([g.upper(i) for g in gs]))
         return r
@@ -173,8 +173,8 @@ class Rectangle(Geometry):
                     g2 = list(set(mbrs) - set(g1))
                     if len(g1) <= 0 or len(g2) <= 0:
                         continue
-                    mbr1 = Rectangle.unions([g for g in g1])
-                    mbr2 = Rectangle.unions([g for g in g2])
+                    mbr1 = Rectangle.unions(g1)
+                    mbr2 = Rectangle.unions(g2)
                     area = mbr1.volume() + mbr2.volume()
                     overlop = mbr1.overlop(mbr2).volume()
                     plans.append(dict(mbr=mbr,dimension=d,index=i,area=area,overlop=overlop,g=[g1,g2]))

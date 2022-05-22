@@ -28,7 +28,7 @@ logging = LogHandler('e3')
 def experiment3(count = 1,
                 query_param_dict = dict(
                         #center = dict(count=6000, sizes=[1,1,1], posrandom=100, lengthcenter=0.1, lengthscale=0.05),
-                        gaussian = dict(count=6000, sizes=[2,2,2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
+                        gaussian = dict(count=6000, sizes=[2,2,2], posrandom=100, lengthcenter=0.1, lengthscale=0.05)
                         #uniform = dict(count=6000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.1, lengthscale=0.0),
                         #grid= dict(count=6000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=-1.0)
                         ),
@@ -100,8 +100,10 @@ def experiment3(count = 1,
         values = rtree_time[key]
         plt.subplot(int('24' + str(count)))
         count += 1
-        norefs = [(d[0][0] - d[1][0]) for d in values]
-        refs = [(d[2][0] - d[3][0]) for d in values]
+        norefs = [(d[0][0] - d[1][0])/d[0][0] for d in values]
+        refs = [(d[2][0] - d[3][0])/d[2][0] for d in values]
+        print('norefs-time='+ str(norefs))
+        print('refs-time='+str(refs))
 
         plt.plot(max_children_nums, norefs, color='blue', label=key + "_noref")
         plt.plot(max_children_nums, refs, color='red', label=key + "_ref")
@@ -115,17 +117,12 @@ def experiment3(count = 1,
         values = rtree_count[key]
         plt.subplot(int('24' + str(count)))
         count += 1
-        norefs = [(d[0][0] - d[1][0]) for d in values]
+        norefs = [(d[0][0] - d[1][0])/d[0][0] for d in values]
+        refs = [(d[2][0] - d[3][0])/d[2][0] for d in values]
 
-        # max, min = np.max(norefs), np.min(norefs)
-        # norefs = [(d - min) / (max - min) for d in norefs]
-        refs = [(d[2][0] - d[3][0]) for d in values]
+        print('norefs-count=' + str(norefs))
+        print('refs-count=' + str(refs))
 
-        print(key)
-        print(norefs)
-        print(refs)
-        # max, min = np.max(refs), np.min(refs)
-        # refs = [(d - min) / (max - min) for d in refs]
         plt.plot(max_children_nums, norefs, color='blue', label=key + "_noref")
         plt.plot(max_children_nums, refs, color='red', label=key + "_ref")
         plt.grid(which='major', axis='x', linewidth=0.75, linestyle='-', color='0.75', dashes=(15, 10))
