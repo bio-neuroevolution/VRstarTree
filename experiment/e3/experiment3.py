@@ -27,22 +27,23 @@ logging = LogHandler('e3')
 
 def experiment3(count = 1,
                 query_param_dict = dict(
-                        center = dict(count=6000, sizes=[1,1,1], posrandom=100, lengthcenter=0.3, lengthscale=0.05),
-                        gaussian = dict(count=6000, sizes=[2,2,2], posrandom=100, lengthcenter=0.1, lengthscale=0.05),
-                        uniform = dict(count=6000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.1, lengthscale=0.0),
-                        grid= dict(count=6000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=-1.0)
+                        #center = dict(count=3000, sizes=[1,1,1], posrandom=100, lengthcenter=0.3, lengthscale=0.05),
+                        gaussian = dict(count=30000, sizes=[2,2,2], posrandom=100, lengthcenter=0.1, lengthscale=0.05),
+                        #uniform = dict(count=3000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.1, lengthscale=0.0),
+                        #grid= dict(count=3000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.1, lengthscale=-1.0)
                         ),
-                max_children_nums = [2,4,8,16,32,48,64,80,96],
-                blocksizes = [80],
+                max_children_nums = [8], # [2,4,8,16,32,48,64,80,96],
+                blocksizes = [60],
                 fig='show,save',
-                figname='experiment31.png',
+                savename='experiment360',
                 region_params={}):
     '''
         实现Verkle AR*-tree、Verkel R*-tree在不同查询分布下的比较
       :return:
     '''
     logging.info('experiment3...')
-
+    if not savename:
+        savename = 'experiment3'
     itercount = count
     #region_params = {'geotype_probs': [0.9, 0.0, 0.1], 'length_probs': [0.6, 0.3, 0.1],
     #                 'lengthcenters': [0.001, 0.005, 0.01], 'lengthscales': [0.05, 0.05, 0.05]}
@@ -83,7 +84,7 @@ def experiment3(count = 1,
         logging.info(str(rtree_count[key]))
 
 
-    log_path = 'experiment3.csv'
+    log_path = savename + '.csv'
     file = open(log_path, 'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(file)
     for key, query_param in query_param_dict.items():
@@ -134,7 +135,7 @@ def experiment3(count = 1,
         plt.legend(loc='best')
 
     if fig.__contains__('save'):
-        plt.savefig(figname)
+        plt.savefig(savename+'.png')
     if fig.__contains__('show'):
         plt.show()
 
@@ -204,5 +205,5 @@ def drawfig():
 
 
 if __name__ == '__main__':
-    #experiment3()
-    drawfig()
+    experiment3()
+    #drawfig()

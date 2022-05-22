@@ -19,14 +19,8 @@ class RTree:
     SELECTION_DEFAULT = 'select_rstar'     #缺省节点选择方法名
     MERGE_DEFAULT = "merge_nodes"          #缺省合并节点方法名
     SPLIT_DEFAULT = 'split_node'           #缺省分裂节点方法名
-    # 算法Map
-    algs = {'select_rstar': alg.select_nodes_rstar,'merge_nodes':alg.merge_nodes_rstar,'split_node':alg.split_node_rstar}
 
-    @classmethod
-    def registe(cls,name,func):
-        RTree.algs[name] = func
-
-    def __init__(self,context : Configuration,range : Rectangle=None):
+    def __init__(self,context : Configuration,range : Rectangle=None,refused=True):
         """
         R树
         :param range Rectangle 初始范围
@@ -39,6 +33,12 @@ class RTree:
             self.range = geo.EMPTY_RECT
         self.query_node_count = 0
         self.depth = 0
+        if refused:
+            self.algs = {'select_rstar': alg.select_nodes_rstar, 'merge_nodes': alg.merge_nodes_rstar,
+                    'split_node': alg.split_node_ref}
+        else:
+            self.algs = {'select_rstar': alg.select_nodes_rstar, 'merge_nodes': alg.merge_nodes_rstar,
+                    'split_node': alg.split_node_rstar}
 
     def serialize(self):
         return {'range':str(self.range),'root':RNode.serialize(self.root)}
@@ -184,19 +184,19 @@ class RTree:
         # elif len(nodes) == 1:return nodes[0]
         algName = self.context.select_nodes_func
         if algName is None or algName == '' :algName = RTree.SELECTION_DEFAULT
-        method = RTree.algs[algName]
+        method = self.algs[algName]
         return method(self,entry,nodes)
 
     def _doMerge(self,nodes):
         algName = self.context.merge_nodes_func
         if algName is None or algName == '': algName = RTree.MERGE_DEFAULT
-        method = RTree.algs[algName]
+        method = self.algs[algName]
         return method(self, nodes)
 
     def _doSplit(self,node):
         algName = self.context.split_node_func
         if algName is None or algName == '': algName = RTree.SPLIT_DEFAULT
-        method = RTree.algs[algName]
+        method = self.algs[algName]
         return method(self, node)
 
     def all_entries(self,node=None):
@@ -303,10 +303,7 @@ class RTree:
         if refused:
             plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
             maxcov = plans[0]['cov']
-            if maxcov > 0:
-                logging.info('maxcov='+str(maxcov)+",covs="+str([p['cov'] for p in plans]))
-            plans = [p for p in plans if abs(maxcov - p['cov']) <= 5.0]
-
+            plans = [p for p in plans if p['cov'] == maxcov]
 
         # 选择总面积小的
         plans = sorted(plans, key=lambda p: p['area'])
@@ -347,9 +344,7 @@ class RTree:
         if refused:
             plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
             maxcov = plans[0]['cov']
-            if maxcov > 0:
-                logging.info('maxcov='+maxcov+',covs='+str([p['cov'] for p in plans]))
-            plans = [p for p in plans if abs(maxcov - p['cov']) <= 5.0]
+            plans = [p for p in plans if p['cov'] == maxcov]
 
         # 按照重叠面积升序排序
         plans = sorted(plans, key=lambda p: p['overlop'])
@@ -402,13 +397,6 @@ class RTree:
         return leafs
 
     def rearrage_all(self,refused=True):
-
-        oldalgs = RTree.algs.copy()
-        if refused:
-            RTree.algs['split_node'] = alg.split_node_ref
-        else:
-            RTree.algs['split_node'] = alg.split_node_rstar
-
         entries = self.all_entries()
         nodes = []
         self.rearrage_leafs(entries,nodes,refused)
@@ -420,12 +408,6 @@ class RTree:
                 self.root = RNode(mbr=None,parent=None,children=parents,entries=[])
                 break
             results,nodes = [],parents
-
-
-        RTree.algs = oldalgs
-
-
-
 
     def rearrage_all2(self):
         entries = self.all_entries()
