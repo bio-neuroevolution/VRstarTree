@@ -5,13 +5,13 @@
       <sourceFolder url="file://$MODULE_DIR$/pRTree" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/pVerkle" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/experiment" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/spatiotemporal_blockdag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/spatiotemporal_blockdag/merkle3Drtree" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/spatiotemporal_blockdag/notebooks" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/spatiotemporal_blockdag/other" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/spatiotemporal_blockdag/plot_scripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/spatiotemporal_blockdag/wise" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
-    </content>
-    <content url="file://$MODULE_DIR$/../spatiotemporal_blockdag">
-      <sourceFolder url="file://$MODULE_DIR$/../spatiotemporal_blockdag/wise" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../spatiotemporal_blockdag/merkle3Drtree" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../spatiotemporal_blockdag/plot_scripts" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../spatiotemporal_blockdag/other" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.7 (VRstarTree)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -16,7 +16,7 @@ def experiment1(count = 1,
                                       select_nodes_func='', merge_nodes_func='', split_node_func=''),
                 query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1),
                 fig='show,save',
-                savename='experiment1_523'
+                savename='experimenttemp1'
                 ):
     '''
     实现Verkle AR*-tree、Verkel R*-tree、Merkle KD-tree，scan-time在不同区块尺寸下的查询性能比较
@@ -28,7 +28,7 @@ def experiment1(count = 1,
 
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = query.run_query_transaction(context, count=count,
                                                                                        blocksizes=blocksizes,
-                                                                                       content='all',
+                                                                                       content='blockdag',
                                                                                        query_param=query_param,
                                                                                        region_params={},
                                                                                        query_mbrs=[],

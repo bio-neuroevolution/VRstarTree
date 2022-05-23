@@ -11,17 +11,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import geo
+
+
 from log import LogHandler
 
 
 
 from blocks import BTransaction, BlockChain
 from dataloader import PocemonLoader
-#from merklePatriciaTree.patricia_tree import MerklePatriciaTree
+from merklePatriciaTree.patricia_tree import MerklePatriciaTree
 from utils import Configuration, Collections
-from wise import simulation
+
+import wise.simulation as simulation
 from wise.blockDAG import analysis_utils
 from wise.blockDAG import search_on_blockDAG as sob
+
 
 # 读取数据
 logging = LogHandler('run')
