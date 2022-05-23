@@ -34,7 +34,7 @@ def experiment2(count=1,
         :return:
         '''
 
-
+    logging.info('experiment2...')
 
 
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree, _ = query.run_query_transaction(context, count=count,

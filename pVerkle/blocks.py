@@ -122,9 +122,12 @@ class Block:
         rs = {'context': self.context}
         rs.update({'nonce':self.nonce,'parent_hash': str(self.parent_hash),'next_hash':str(self.next_hash)})
         rs.update({'start_time':str(self.start_time),'end_time':str(self.end_time),'timestamp':str(self.timestamp)})
-        #rs.update({'statetrieRoot':self.statetrieRoot.serialize()})
-        rs.update({'trantrieRoot': self.trantrieRoot.serialize()})
-        #rs.update({'trajetrieRoot': self.trajetrieRoot.serialize()})
+        if self.statetrieRoot is not None:
+            rs.update({'statetrieRoot':self.statetrieRoot.serialize()})
+        if self.trantrieRoot is not None:
+            rs.update({'trantrieRoot': self.trantrieRoot.serialize()})
+        if self.trajetrieRoot is not None:
+            rs.update({'trajetrieRoot': self.trajetrieRoot.serialize()})
         return rs
 
     def summary(self,filename,path):
@@ -136,8 +139,8 @@ class Block:
     def _create_vpt(self,transactions):
         accounts = self._create_accounts(transactions)
         vpt = None # VerklePatriciaTree()
-        #for acc in accounts:
-        #    vpt.insert(acc.id,acc)
+        for acc in accounts:
+            vpt.insert(acc.id,acc)
         self.statetrieRoot = vpt
         return vpt
 
@@ -152,8 +155,8 @@ class Block:
     def _create_traj_trie(self,transactions):
         mbr = geo.Rectangle(4,[0.,1.,0.,1.,0.,1.,0.,1.])
         tree = VerkleRTree(self.context,mbr)
-        #for tr in transactions:
-        #    tree.insert(BRecord(tr.account,tr.log,tr.lat,tr.ts,self.account_distance(tr.account)))
+        for tr in transactions:
+            tree.insert(BRecord(tr.account,tr.log,tr.lat,tr.ts,self.account_distance(tr.account)))
         return tree
 
     def account_distance(self,s1):
@@ -183,11 +186,12 @@ class Block:
         if not self.trantrieRoot.range.isOverlop(mbr):return []
         return self.trantrieRoot.find(mbr)
     def query_traj(self,account:str,mbr:geo.Rectangle)->list:
-        #r = geo.Rectangle(mbr.dimension + 1)
-        #for i in range(mbr.dimension):
-        #    r.update(i,mbr.lower(i),mbr.upper(i))
-        #r.update(r.dimension-1,account_dis,account_dis)
+        r = geo.Rectangle(mbr.dimension + 1)
+        for i in range(mbr.dimension):
+            r.update(i,mbr.lower(i),mbr.upper(i))
+
         account_dis = self.account_distance(account)
+        r.update(r.dimension - 1, account_dis, account_dis)
         mbr.update(3,account_dis,account_dis)
         return self.trajetrieRoot.find(mbr)
 

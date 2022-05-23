@@ -61,3 +61,195 @@
 2022-05-21 09:51:09,431 experiment3.py[line:77] INFO grid
 2022-05-21 09:51:09,431 experiment3.py[line:78] INFO [[[3.6053292751312256], [3.5772576332092285], [3.539799213409424], [3.6631741523742676]], [[3.368988037109375], [3.39092755317688], [3.538742780685425], [3.4417965412139893]], [[3.3909289836883545], [3.3739750385284424], [3.355031967163086], [3.3659961223602295]], [[3.174684762954712], [3.195458173751831], [3.1685307025909424], [3.225625514984131]], [[3.226381301879883], [3.1617913246154785], [3.14459490776062], [3.153566598892212]], [[3.1326277256011963], [3.162510871887207], [3.1635549068450928], [3.2353525161743164]], [[3.158555507659912], [3.098716974258423], [3.123654842376709], [3.2453153133392334]], [[3.2134110927581787], [3.1089203357696533], [3.095724105834961], [3.1039376258850098]], [[3.138582468032837], [3.1046876907348633], [3.118664264678955], [3.117666482925415]], [[3.1445908546447754], [3.227372884750366], [3.1278555393218994], [3.1336164474487305]]]
 2022-05-21 09:51:09,431 experiment3.py[line:79] INFO [[[30183.0], [31940.0], [30152.0], [32056.0]], [[23435.0], [24348.0], [23418.0], [24434.0]], [[20677.0], [21545.0], [20688.0], [21626.0]], [[19641.0], [20282.0], [19652.0], [20311.0]], [[19254.0], [19834.0], [19254.0], [19843.0]], [[19158.0], [19649.0], [19158.0], [19656.0]], [[18732.0], [19497.0], [18732.0], [19497.0]], [[18732.0], [19497.0], [18732.0], [19497.0]], [[18732.0], [19497.0], [18732.0], [19497.0]], [[18732.0], [19497.0], [18732.0], [19497.0]]]
+2022-05-21 16:16:28,924 experiment3.py[line:44] INFO experiment3...
+2022-05-21 16:16:54,630 experiment3.py[line:44] INFO experiment3...
+2022-05-21 16:16:55,612 experiment3.py[line:61] INFO max_children_num=8
+2022-05-21 16:16:55,612 experiment3.py[line:66] INFO query with :gaussian
+2022-05-21 16:41:21,299 experiment3.py[line:81] INFO gaussian
+2022-05-21 16:41:21,300 experiment3.py[line:82] INFO [[[62.85472369194031], [52.56965088844299], [62.92669486999512], [40.37979817390442]]]
+2022-05-21 16:41:21,300 experiment3.py[line:83] INFO [[[9555.0], [3030.0], [9522.0], [3035.0]]]
+2022-05-21 17:10:55,938 experiment3.py[line:44] INFO experiment3...
+2022-05-21 17:11:00,171 experiment3.py[line:61] INFO max_children_num=8
+2022-05-21 17:11:00,172 experiment3.py[line:66] INFO query with :gaussian
+2022-05-21 17:23:54,417 experiment3.py[line:44] INFO experiment3...
+2022-05-21 17:23:56,734 experiment3.py[line:61] INFO max_children_num=8
+2022-05-21 17:23:56,734 experiment3.py[line:66] INFO query with :gaussian
+2022-05-21 17:52:15,044 experiment3.py[line:81] INFO gaussian
+2022-05-21 17:52:15,044 experiment3.py[line:82] INFO [[[76.759770154953], [31.710494995117188], [45.131373167037964], [33.7303740978241]]]
+2022-05-21 17:52:15,044 experiment3.py[line:83] INFO [[[9637.0], [3866.0], [9611.0], [3625.0]]]
+2022-05-21 17:53:29,251 experiment3.py[line:44] INFO experiment3...
+2022-05-21 17:53:30,175 experiment3.py[line:61] INFO max_children_num=8
+2022-05-21 17:53:30,176 experiment3.py[line:66] INFO query with :gaussian
+2022-05-21 17:56:32,300 experiment3.py[line:81] INFO gaussian
+2022-05-21 17:56:32,300 experiment3.py[line:82] INFO [[[46.05431413650513], [0.0], [46.1278121471405], [0.0]]]
+2022-05-21 17:56:32,300 experiment3.py[line:83] INFO [[[9161.0], [0.0], [9311.0], [0.0]]]
+2022-05-21 23:25:12,304 experiment3.py[line:44] INFO experiment3...
+2022-05-21 23:25:13,045 experiment3.py[line:61] INFO max_children_num=8
+2022-05-21 23:25:13,045 experiment3.py[line:66] INFO query with :gaussian
+2022-05-21 23:28:27,738 experiment3.py[line:81] INFO gaussian
+2022-05-21 23:28:27,738 experiment3.py[line:82] INFO [[[45.874228954315186], [0.0], [57.049906969070435], [0.0]]]
+2022-05-21 23:28:27,738 experiment3.py[line:83] INFO [[[10101.0], [0.0], [10079.0], [0.0]]]
+2022-05-21 23:30:36,960 experiment3.py[line:44] INFO experiment3...
+2022-05-21 23:30:37,789 experiment3.py[line:61] INFO max_children_num=8
+2022-05-21 23:30:37,789 experiment3.py[line:66] INFO query with :gaussian
+2022-05-21 23:34:12,291 experiment3.py[line:81] INFO gaussian
+2022-05-21 23:34:12,291 experiment3.py[line:82] INFO [[[52.484517335891724], [0.0], [54.06053304672241], [0.0]]]
+2022-05-21 23:34:12,291 experiment3.py[line:83] INFO [[[10735.0], [0.0], [10768.0], [0.0]]]
+2022-05-21 23:34:41,265 experiment3.py[line:44] INFO experiment3...
+2022-05-21 23:34:42,493 experiment3.py[line:61] INFO max_children_num=8
+2022-05-21 23:34:42,493 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 00:00:38,669 experiment3.py[line:81] INFO gaussian
+2022-05-22 00:00:38,669 experiment3.py[line:82] INFO [[[54.071420192718506], [40.43504786491394], [52.091371059417725], [37.670286893844604]]]
+2022-05-22 00:00:38,669 experiment3.py[line:83] INFO [[[9925.0], [4095.0], [9932.0], [3981.0]]]
+2022-05-22 00:17:03,909 experiment3.py[line:44] INFO experiment3...
+2022-05-22 00:17:04,658 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 00:17:04,659 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 00:30:41,848 experiment3.py[line:81] INFO gaussian
+2022-05-22 00:30:41,848 experiment3.py[line:82] INFO [[[40.44248008728027], [34.5900342464447], [50.30681610107422], [39.15622401237488]]]
+2022-05-22 00:30:41,849 experiment3.py[line:83] INFO [[[11081.0], [6236.0], [10977.0], [6087.0]]]
+2022-05-22 00:32:19,616 experiment3.py[line:44] INFO experiment3...
+2022-05-22 00:32:20,704 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 00:32:20,704 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 00:46:18,055 experiment3.py[line:44] INFO experiment3...
+2022-05-22 00:46:18,834 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 00:46:18,835 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 01:00:12,337 experiment3.py[line:81] INFO gaussian
+2022-05-22 01:00:12,337 experiment3.py[line:82] INFO [[[52.931501150131226], [36.10549807548523], [52.7139413356781], [38.611066818237305]]]
+2022-05-22 01:00:12,337 experiment3.py[line:83] INFO [[[9979.0], [3896.0], [9931.0], [3904.0]]]
+2022-05-22 01:01:43,055 experiment3.py[line:44] INFO experiment3...
+2022-05-22 01:01:44,363 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 01:01:44,363 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 01:11:38,581 experiment3.py[line:44] INFO experiment3...
+2022-05-22 01:11:40,786 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 01:11:40,787 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 01:26:21,381 experiment3.py[line:44] INFO experiment3...
+2022-05-22 01:26:23,032 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 01:26:23,033 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 01:30:52,247 experiment3.py[line:44] INFO experiment3...
+2022-05-22 01:30:53,205 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 01:30:53,205 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 01:41:14,050 experiment3.py[line:44] INFO experiment3...
+2022-05-22 01:41:14,886 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 01:41:14,886 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 01:48:18,414 experiment3.py[line:44] INFO experiment3...
+2022-05-22 01:48:19,351 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 01:48:19,351 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 01:52:11,161 experiment3.py[line:44] INFO experiment3...
+2022-05-22 01:52:12,512 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 01:52:12,512 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 01:52:45,206 experiment3.py[line:44] INFO experiment3...
+2022-05-22 01:52:46,516 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 01:52:46,516 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 01:54:18,737 experiment3.py[line:44] INFO experiment3...
+2022-05-22 01:54:19,680 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 01:54:19,680 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 01:56:50,332 experiment3.py[line:44] INFO experiment3...
+2022-05-22 01:56:51,705 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 01:56:51,706 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 01:57:23,895 experiment3.py[line:44] INFO experiment3...
+2022-05-22 01:57:25,198 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 01:57:25,198 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 02:00:01,955 experiment3.py[line:44] INFO experiment3...
+2022-05-22 02:00:02,797 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 02:00:02,797 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 02:00:14,352 experiment3.py[line:44] INFO experiment3...
+2022-05-22 02:00:15,239 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 02:00:15,239 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 02:51:54,176 experiment3.py[line:81] INFO gaussian
+2022-05-22 02:51:54,176 experiment3.py[line:82] INFO [[[832.9459500312805], [513.6151523590088], [778.7337453365326], [510.2486321926117]]]
+2022-05-22 02:51:54,176 experiment3.py[line:83] INFO [[[0.0], [0.0], [0.0], [0.0]]]
+2022-05-22 09:59:40,921 experiment3.py[line:44] INFO experiment3...
+2022-05-22 09:59:42,279 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 09:59:42,279 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 10:03:30,149 experiment3.py[line:44] INFO experiment3...
+2022-05-22 10:03:32,104 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 10:03:32,105 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 10:07:07,050 experiment3.py[line:44] INFO experiment3...
+2022-05-22 10:07:08,121 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 10:07:08,121 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 10:12:31,973 experiment3.py[line:44] INFO experiment3...
+2022-05-22 10:12:33,637 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 10:12:33,637 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 10:16:25,828 experiment3.py[line:44] INFO experiment3...
+2022-05-22 10:16:28,353 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 10:16:28,354 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 10:18:58,878 experiment3.py[line:44] INFO experiment3...
+2022-05-22 10:19:02,576 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 10:19:02,576 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 10:28:38,213 experiment3.py[line:44] INFO experiment3...
+2022-05-22 10:28:40,555 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 10:28:40,556 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 10:31:42,943 experiment3.py[line:44] INFO experiment3...
+2022-05-22 10:31:45,301 experiment3.py[line:61] INFO max_children_num=8
+2022-05-22 10:31:45,302 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 10:50:38,997 experiment3.py[line:81] INFO gaussian
+2022-05-22 10:50:38,997 experiment3.py[line:82] INFO [[[116.34171199798584], [34.92519807815552], [41.012595891952515], [34.53579807281494]]]
+2022-05-22 10:50:38,997 experiment3.py[line:83] INFO [[[15.080851063829787], [4.131914893617021], [15.476595744680852], [4.110638297872341]]]
+2022-05-22 11:23:58,183 experiment3.py[line:44] INFO experiment3...
+2022-05-22 11:23:58,662 experiment3.py[line:61] INFO max_children_num=2
+2022-05-22 11:23:58,662 experiment3.py[line:66] INFO query with :center
+2022-05-22 11:40:17,046 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 16:20:38,632 experiment3.py[line:44] INFO experiment3...
+2022-05-22 16:20:40,431 experiment3.py[line:61] INFO max_children_num=2
+2022-05-22 16:20:40,432 experiment3.py[line:66] INFO query with :center
+2022-05-22 17:03:10,130 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 17:28:04,182 experiment3.py[line:44] INFO experiment3...
+2022-05-22 17:28:04,865 experiment3.py[line:61] INFO max_children_num=2
+2022-05-22 17:28:04,866 experiment3.py[line:66] INFO query with :center
+2022-05-22 18:11:56,210 experiment3.py[line:66] INFO query with :gaussian
+2022-05-22 19:19:54,331 experiment3.py[line:66] INFO query with :uniform
+2022-05-22 21:08:33,148 experiment3.py[line:44] INFO experiment3...
+2022-05-22 21:08:33,895 experiment3.py[line:62] INFO max_children_num=8
+2022-05-22 21:08:33,895 experiment3.py[line:67] INFO query with :gaussian
+2022-05-22 21:18:08,417 experiment3.py[line:44] INFO experiment3...
+2022-05-22 21:18:10,309 experiment3.py[line:62] INFO max_children_num=8
+2022-05-22 21:18:10,310 experiment3.py[line:67] INFO query with :gaussian
+2022-05-22 21:42:54,067 experiment3.py[line:82] INFO gaussian
+2022-05-22 21:42:54,070 experiment3.py[line:83] INFO [[[44.69070100784302], [25.97714400291443], [25.483880043029785], [96.74243569374084]]]
+2022-05-22 21:42:54,070 experiment3.py[line:84] INFO [[[11.875399361022364], [4.194888178913738], [11.766773162939296], [3.97444089456869]]]
+2022-05-22 21:44:34,829 experiment3.py[line:44] INFO experiment3...
+2022-05-22 21:44:55,340 experiment3.py[line:62] INFO max_children_num=8
+2022-05-22 21:44:55,341 experiment3.py[line:67] INFO query with :gaussian
+2022-05-22 21:50:37,788 experiment3.py[line:44] INFO experiment3...
+2022-05-22 21:50:54,550 experiment3.py[line:62] INFO max_children_num=8
+2022-05-22 21:50:54,550 experiment3.py[line:67] INFO query with :gaussian
+2022-05-22 21:51:31,102 experiment3.py[line:44] INFO experiment3...
+2022-05-22 21:51:44,742 experiment3.py[line:62] INFO max_children_num=8
+2022-05-22 21:51:44,742 experiment3.py[line:67] INFO query with :gaussian
+2022-05-22 22:41:32,838 experiment3.py[line:82] INFO gaussian
+2022-05-22 22:41:32,838 experiment3.py[line:83] INFO [[[800.1018989086151], [251.65484523773193], [407.1488358974457], [367.22927165031433]]]
+2022-05-22 22:41:32,838 experiment3.py[line:84] INFO [[[12.476038338658148], [5.172523961661342], [12.23961661341853], [4.987220447284345]]]
+2022-05-22 22:44:51,616 experiment3.py[line:44] INFO experiment3...
+2022-05-22 22:44:57,723 experiment3.py[line:62] INFO max_children_num=8
+2022-05-22 22:44:57,723 experiment3.py[line:67] INFO query with :gaussian
+2022-05-22 23:01:28,853 experiment3.py[line:44] INFO experiment3...
+2022-05-22 23:01:45,463 experiment3.py[line:62] INFO max_children_num=8
+2022-05-22 23:01:45,464 experiment3.py[line:67] INFO query with :gaussian
+2022-05-22 23:21:29,947 experiment3.py[line:44] INFO experiment3...
+2022-05-22 23:21:46,259 experiment3.py[line:62] INFO max_children_num=8
+2022-05-22 23:21:46,259 experiment3.py[line:67] INFO query with :gaussian
+2022-05-23 00:20:33,574 experiment3.py[line:82] INFO gaussian
+2022-05-23 00:20:33,574 experiment3.py[line:83] INFO [[[891.1480939388275], [708.1786727905273], [287.1820890903473], [275.9659390449524]]]
+2022-05-23 00:20:33,574 experiment3.py[line:84] INFO [[[12.115015974440894], [4.792332268370607], [11.964856230031948], [4.424920127795527]]]
+2022-05-23 00:32:36,226 experiment3.py[line:44] INFO experiment3...
+2022-05-23 00:32:36,342 experiment3.py[line:62] INFO max_children_num=8
+2022-05-23 00:32:36,342 experiment3.py[line:67] INFO query with :center
+2022-05-23 00:55:52,210 experiment3.py[line:82] INFO center
+2022-05-23 00:55:52,211 experiment3.py[line:83] INFO [[[213.29311990737915], [135.95760011672974], [215.62578201293945], [137.42014694213867]]]
+2022-05-23 00:55:52,211 experiment3.py[line:84] INFO [[[8.268370607028753], [4.373801916932908], [8.121405750798722], [4.284345047923322]]]
+2022-05-23 00:57:49,621 experiment3.py[line:44] INFO experiment3...
+2022-05-23 00:57:49,733 experiment3.py[line:62] INFO max_children_num=4
+2022-05-23 00:57:49,734 experiment3.py[line:67] INFO query with :center
+2022-05-23 01:35:42,023 experiment3.py[line:62] INFO max_children_num=8
+2022-05-23 01:35:42,024 experiment3.py[line:67] INFO query with :center
+2022-05-23 23:49:33,291 experiment3.py[line:45] INFO experiment3...
+2022-05-23 23:49:33,326 experiment3.py[line:63] INFO max_children_num=4
+2022-05-23 23:49:33,327 experiment3.py[line:68] INFO query with :grid
+2022-05-24 00:24:48,010 experiment3.py[line:63] INFO max_children_num=8
+2022-05-24 00:24:48,011 experiment3.py[line:68] INFO query with :grid
+2022-05-24 00:46:25,650 experiment3.py[line:63] INFO max_children_num=16
+2022-05-24 00:46:25,650 experiment3.py[line:68] INFO query with :grid
+2022-05-24 01:12:23,548 experiment3.py[line:63] INFO max_children_num=24
+2022-05-24 01:12:23,548 experiment3.py[line:68] INFO query with :grid
+2022-05-24 01:24:15,039 experiment3.py[line:63] INFO max_children_num=32
+2022-05-24 01:24:15,039 experiment3.py[line:68] INFO query with :grid

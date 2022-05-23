@@ -7,20 +7,28 @@ from blocks import BlockChain
 from dataloader import PocemonLoader
 from log import LogHandler
 from merklePatriciaTree.patricia_tree import MerklePatriciaTree
-from run import _initdata
+from query import _initdata
 from utils import Configuration, Collections
 
-def experiment4():
+def experiment4(count = 1,
+                context = Configuration(max_children_num=8, max_entries_num=8, account_length=8, account_count=200,
+                            select_nodes_func='', merge_nodes_func='', split_node_func=''),
+                query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1),
+                blocksizes = [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250],
+                proof_length_unit=64,
+                proof_sample_count= 10,
+                fig='show,save',
+                savename='experiment4',
+                ):
     """
     比较MPT树和Verkle树，Merkle KD-Tree和两个Verkle AR*-tree树的证明长度
     """
-    context = Configuration(max_children_num=8, max_entries_num=8, account_length=8, account_count=200,
-                            select_nodes_func='', merge_nodes_func='', split_node_func='')
-    query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1)
-    blocksizes = [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250]
+
+
+
     account_lengths,tran_lengths,traj_lengths,block_dag_lengths,mpt_lengths = [],[],[],[],[]
 
-    proof_length_unit ,proof_sample_count= 64,10
+
     # 读取数据
     transactions = _initdata(context, {})
 
@@ -65,7 +73,7 @@ def experiment4():
     logging.info(block_dag_lengths)
     logging.info(mpt_lengths)
 
-    log_path = 'experiment4.csv'
+    log_path = savename + '.csv'
     file = open(log_path, 'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(file)
     csv_writer.writerow(blocksizes)
@@ -87,7 +95,7 @@ def experiment4():
     plt.xlabel('Block size')
     plt.ylabel('Proof length')
     plt.legend(loc='best')
-    plt.savefig('experiment4_proof.png')
+    plt.savefig(savename+'.png')
 
 if __name__ == '__main__':
     experiment4()
