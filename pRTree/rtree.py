@@ -403,15 +403,15 @@ class RTree:
                 for g in optima['g'][i]:
                     index = nodes.index(g)
                     ps = [self._clone_plan(p) for p in origin_plans if p['pos'] == index]
-                for p in ps:
-                    p['g'][0] = [t for t in p['g'][0] if t in optima['g'][i]]
-                    p['g'][1] = [t for t in p['g'][1] if t in optima['g'][i]]
-                    if len(p['g'][0]) <= 0 or len(p['g'][1]) <= 0: continue
-                    plans.append(p)
-                    mbr1 = Rectangle.unions([e.mbr for e in p['g'][0]])
-                    mbr2 = Rectangle.unions([e.mbr for e in p['g'][1]])
-                    p['area'], p['overlop'] = mbr1.volume() + mbr2.volume(), mbr1.overlop(mbr2).volume()
-                    p['cov'] = Collections.group_cov([g.ref for g in p['g'][0]], [g.ref for g in p['g'][1]])
+                    for p in ps:
+                        p['g'][0] = [t for t in p['g'][0] if t in optima['g'][i]]
+                        p['g'][1] = [t for t in p['g'][1] if t in optima['g'][i]]
+                        if len(p['g'][0]) <= 0 or len(p['g'][1]) <= 0: continue
+                        plans.append(p)
+                        mbr1 = Rectangle.unions([e.mbr for e in p['g'][0]])
+                        mbr2 = Rectangle.unions([e.mbr for e in p['g'][1]])
+                        p['area'], p['overlop'] = mbr1.volume() + mbr2.volume(), mbr1.overlop(mbr2).volume()
+                        p['cov'] = Collections.group_cov([g.ref for g in p['g'][0]], [g.ref for g in p['g'][1]])
                 self.rearrage_nodes(nodes, origin_plans, plans, results, refused)
 
     def rearrage_leafs(self, entries,origin_plans,plans,leafs,refused=True):
