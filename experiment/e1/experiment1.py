@@ -28,7 +28,7 @@ def experiment1(count = 1,
 
     rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree,scan = query.run_query_transaction(context, count=count,
                                                                                        blocksizes=blocksizes,
-                                                                                       content='blockdag',
+                                                                                       content='all',
                                                                                        query_param=query_param,
                                                                                        region_params={},
                                                                                        query_mbrs=[],
