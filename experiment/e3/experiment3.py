@@ -27,12 +27,12 @@ logging = LogHandler('e3')
 
 def experiment3(count = 1,
                 query_param_dict = dict(
-                        #center = dict(count=3000, sizes=[1,1,1], posrandom=100, lengthcenter=0.3, lengthscale=0.05),
+                        center = dict(count=3000, sizes=[1,1,1], posrandom=100, lengthcenter=0.3, lengthscale=0.05),
                         gaussian = dict(count=30000, sizes=[2,2,2], posrandom=100, lengthcenter=0.1, lengthscale=0.05),
-                        #uniform = dict(count=3000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.1, lengthscale=0.0),
-                        #grid= dict(count=3000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.1, lengthscale=-1.0)
+                        uniform = dict(count=3000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.1, lengthscale=0.0),
+                        grid= dict(count=3000, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.1, lengthscale=-1.0)
                         ),
-                max_children_nums = [8], # [2,4,8,16,32,48,64,80,96],
+                max_children_nums = [4,8,16,32,64],
                 blocksizes = [60],
                 fig='show,save',
                 savename='experiment360',

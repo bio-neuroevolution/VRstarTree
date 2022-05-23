@@ -177,7 +177,7 @@ class Rectangle(Geometry):
                     mbr2 = Rectangle.unions(g2)
                     area = mbr1.volume() + mbr2.volume()
                     overlop = mbr1.overlop(mbr2).volume()
-                    plans.append(dict(mbr=mbr,dimension=d,index=i,area=area,overlop=overlop,g=[g1,g2]))
+                    plans.append(dict(mbr=mbr,pos=mbrs.index(mbr),dimension=d,index=i,area=area,overlop=overlop,g=[g1,g2]))
         # 如果没有得到任何方案，则平均分成两组
         if len(plans) == 0:
             mbr = mbrs[len(mbrs)//2]

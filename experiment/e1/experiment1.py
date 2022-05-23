@@ -31,7 +31,7 @@ def experiment1(count = 1,
                                                                                        content='all',
                                                                                        query_param=query_param,
                                                                                        region_params={},
-                                                                                       query_mbrs={},
+                                                                                       query_mbrs=[],
                                                                                        refused=True)
 
     logging.info("rtreep="+str(rtreep))

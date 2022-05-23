@@ -287,7 +287,7 @@ class BlockChain:
             txs = b.query_tran(mbr)
             r = r +txs
             self.query_tran_node_count += b.trantrieRoot.query_node_count
-        self.query_tran_node_count /= len(self.blocks)
+        #self.query_tran_node_count /= len(self.blocks)
         return r
     def query_traj(self,account,mbr):
         r = []

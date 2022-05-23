@@ -14,7 +14,7 @@ from log import LogHandler
 from utils import Configuration, Collections
 
 
-import run
+import query
 
 # 读取数据
 logging = LogHandler('e2')
@@ -25,7 +25,9 @@ def experiment2(count=1,
                             select_nodes_func='', merge_nodes_func='', split_node_func=''),
                 query_param = dict(count=200, sizes=[2, 2, 2], posrandom=100, lengthcenter=0.05, lengthscale=0.1),
                 region_params={'geotype_probs': [0.8, 0.0, 0.2], 'length_probs': [0.5, 0.3, 0.2],
-                               'lengthcenters': [0.001, 0.01, 0.05], 'lengthscales': [0.5, 0.5, 0.5]}
+                               'lengthcenters': [0.001, 0.01, 0.05], 'lengthscales': [0.5, 0.5, 0.5]},
+                fig='show,save',
+                savename='experiment2_524'
                 ):
     '''
         实现Verkle AR*-tree、Verkel R*-tree对于非点类型数据查询的性能比较
@@ -35,13 +37,15 @@ def experiment2(count=1,
 
 
 
-    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree, _ = run.run_query_transaction(context, count=count,
+    rtreep, rtreep_nodecount, rtreea, rtreea_nodecount, kdtree, _ = query.run_query_transaction(context, count=count,
                                                                                           blocksizes=blocksizes,
                                                                                           content='rtree,optima,blockdag',
                                                                                           query_param=query_param,
-                                                                                          region_params=region_params)
+                                                                                          region_params=region_params,
+                                                                                          query_mbrs=[],
+                                                                                          refused=True)
 
-    log_path = 'experiment2.csv'
+    log_path = savename + '.csv'
     file = open(log_path, 'w', encoding='utf-8', newline='')
     csv_writer = csv.writer(file)
     csv_writer.writerow(rtreep)
@@ -60,7 +64,7 @@ def experiment2(count=1,
     plt.xlabel('Block Size')
     plt.ylabel('Time(s)')
     plt.legend(loc='best')
-    plt.savefig('experiment2_time.png')
+    plt.savefig(savename+'_time.png')
 
     plt.figure(2)
     plt.plot(blocksizes, rtreep_nodecount, color='blue', label='Verkel R*tree')
@@ -70,7 +74,7 @@ def experiment2(count=1,
     plt.xlabel('Block Size')
     plt.ylabel('Number of Nodes')
     plt.legend(loc='best')
-    plt.savefig('experiment2_count.png')
+    plt.savefig(savename+'_count.png')
 
 if __name__ == '__main__':
     experiment2()

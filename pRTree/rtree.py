@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import math
 import queue
-
+import copy
 
 import alg
 import geo
@@ -287,7 +287,7 @@ class RTree:
             else:
                 self.rearrage_nodes(g,results)
 
-    def rearrage_nodes(self, nodes, results=[],refused=True):
+    def rearrage_nodes5(self, nodes, results=[],refused=True):
         mbrs = [n.mbr for n in nodes]
         # 寻找所有分裂方案
         plans = geo.Rectangle.groupby(tree=self, mbrs=[e.mbr for e in nodes], mode='')
@@ -326,7 +326,7 @@ class RTree:
 
 
 
-    def rearrage_leafs(self, entries, leafs,refused=True):
+    def rearrage_leafs5(self, entries, leafs,refused=True):
         """
         根据数据对象重新安排所有的叶子节点
         """
@@ -359,44 +359,113 @@ class RTree:
         return leafs
 
 
+    def _init_plans(self,entries):
+        # 寻找所有分裂方案
+        plans = geo.Rectangle.groupby(tree=self, mbrs=[e.mbr for e in entries], mode='')
+        # 计算分组的访问频率的组间方差
+        for p in plans:
+            g1, g2 = p['g'][0], p['g'][1]
+            g1, g2 = [entries[g] for g in g1], [entries[g] for g in g2]
+            p['cov'] = Collections.group_cov([g.ref for g in g1], [g.ref for g in g2])
+            p['g'] = [g1, g2]
+        return plans
+    def _clone_plan(self,plan):
+        if isinstance(plan,dict):
+            return dict(mbr=plan['mbr'],dimension=plan['dimension'],pos=plan['pos'],
+                       index=plan['index'],area=plan['area'],overlop=plan['overlop'],cov=plan['cov'],
+                       g=[[g for g in plan['g'][0]],[g for g in plan['g'][1]]])
+        elif isinstance(plan,list):
+            return [self._clone_plan(p) for p in plan]
 
-    def rearrage_leafs2(self,entries,leafs):
-        """
-        根据数据对象重新安排所有的叶子节点
-        """
-        if len(entries) == 0: return []
-
-        plans, maxcov, minarea, minoverlop = [], 0,0,0
-        mbrs = [e.mbr for e in entries]
-        for i, entry in enumerate(entries):
-            for d in range(entry.mbr.dimension):
-                b = entry.mbr.boundary(d)
-                for j in range(2):
-                    if j == 1 and b[0] == b[1]:break
-                    g1, g2 = Rectangle.split(mbrs,d, b[j])
-                    if len(g1)<=0 or len(g2)<=0:continue
-                    g1, g2 = [entries[g] for g in g1],[entries[g] for g in g2]
-                    mbr1, mbr2 = Rectangle.unions([g.mbr for g in g1]), Rectangle.unions([g.mbr for g in g2])
-                    cov = Collections.group_cov([g.ref for g in g1], [g.ref for g in g2])
-                    plans.append(dict(g=[g1, g2], cov=cov, entry=entry, d=d, pos=j,
-                                          overlop=mbr1.overlop(mbr2).volume(), area=mbr1.volume() + mbr2.volume()))
-
+    def rearrage_nodes(self, nodes, origin_plans,plans,results=[],refused=True):
         # 选择组间方差大的
-        plans = sorted(plans,key=lambda p:p['cov'],reverse=True)
-        maxcov = plans[0]['cov']
-        plans = [p for p in plans if abs(maxcov-p['cov'])<=5.0]
+        if refused:
+            plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
+            maxcov = plans[0]['cov']
+            plans = [p for p in plans if p['cov'] == maxcov]
 
-        #选择重叠面积小的
+        # 选择总面积小的
+        plans = sorted(plans, key=lambda p: p['area'])
+        minarea = plans[0]['area']
+        plans = [p for p in plans if abs(p['area'] - minarea) <= 0.1]
+
+        # 选择重叠面积最小的
         plans = sorted(plans, key=lambda p: p['overlop'])
         optima = plans[0]
+
+        # 对分组后的两组的数量分别检查是否仍旧超过阈值
+        for i in range(2):
+            g = optima['g'][i]
+            if len(g) <= self.context.max_children_num:
+                results.append(g)
+            else:
+                plans = []
+                for g in optima['g'][i]:
+                    index = nodes.index(g)
+                    ps = [self._clone_plan(p) for p in origin_plans if p['pos'] == index]
+                for p in ps:
+                    p['g'][0] = [t for t in p['g'][0] if t in optima['g'][i]]
+                    p['g'][1] = [t for t in p['g'][1] if t in optima['g'][i]]
+                    if len(p['g'][0]) <= 0 or len(p['g'][1]) <= 0: continue
+                    plans.append(p)
+                    mbr1 = Rectangle.unions([e.mbr for e in p['g'][0]])
+                    mbr2 = Rectangle.unions([e.mbr for e in p['g'][1]])
+                    p['area'], p['overlop'] = mbr1.volume() + mbr2.volume(), mbr1.overlop(mbr2).volume()
+                    p['cov'] = Collections.group_cov([g.ref for g in p['g'][0]], [g.ref for g in p['g'][1]])
+                self.rearrage_nodes(nodes, origin_plans, plans, results, refused)
+
+    def rearrage_leafs(self, entries,origin_plans,plans,leafs,refused=True):
+        # 选择组间方差大的
+        if refused:
+            plans = sorted(plans, key=lambda p: p['cov'], reverse=True)
+            maxcov = plans[0]['cov']
+            plans = [p for p in plans if p['cov'] == maxcov]
+
+        # 按照重叠面积升序排序
+        plans = sorted(plans, key=lambda p: p['overlop'])
+        optima = plans[0]
+
+        # 对分组后的两组的数量分别检查是否仍旧超过阈值
         for i in range(2):
             if len(optima['g'][i]) <= self.context.max_entries_num:
-                leafs.append(RNode(mbr=None,parent=None, children=[], entries=optima['g'][i]))
+                leafs.append(RNode(mbr=None, parent=None, children=[], entries=optima['g'][i]))
             else:
-                self.rearrage_leafs(optima['g'][i],leafs)
+                plans = []
+                for g in optima['g'][i]:
+                    index = entries.index(g)
+                    ps = [self._clone_plan(p) for p in origin_plans if p['pos'] == index]
+                    for p in ps:
+                        p['g'][0] = [t for t in p['g'][0] if t in optima['g'][i]]
+                        p['g'][1] = [t for t in p['g'][1] if t in optima['g'][i]]
+                        if len(p['g'][0])<=0 or len(p['g'][1])<=0:continue
+                        plans.append(p)
+                        mbr1 = Rectangle.unions([e.mbr for e in p['g'][0]])
+                        mbr2 = Rectangle.unions([e.mbr for e in p['g'][1]])
+                        p['area'],p['overlop'] = mbr1.volume() + mbr2.volume(),mbr1.overlop(mbr2).volume()
+                        p['cov'] = Collections.group_cov([g.ref for g in p['g'][0]], [g.ref for g in p['g'][1]])
+                self.rearrage_leafs(entries,origin_plans,plans,leafs,refused)
+
         return leafs
 
+
     def rearrage_all(self,refused=True):
+        entries = self.all_entries()
+        origin_plans = self._init_plans(entries)
+        plans = self._clone_plan(origin_plans)
+        nodes = []
+        self.rearrage_leafs(entries=entries,origin_plans=origin_plans,plans=plans,leafs=nodes,refused=refused)
+        results = []
+        while True:
+            origin_plans = self._init_plans(nodes)
+            plans = self._clone_plan(origin_plans)
+            self.rearrage_nodes(nodes,origin_plans,plans,results,refused)
+            parents = [RNode(mbr=None,parent=None,children=r,entries=[]) for r in results]
+            if len(parents)<=self.context.max_children_num:
+                self.root = RNode(mbr=None,parent=None,children=parents,entries=[])
+                break
+            results,nodes = [],parents
+
+    def rearrage_all5(self,refused=True):
         entries = self.all_entries()
         nodes = []
         self.rearrage_leafs(entries,nodes,refused)
@@ -409,19 +478,7 @@ class RTree:
                 break
             results,nodes = [],parents
 
-    def rearrage_all2(self):
-        entries = self.all_entries()
-        oldalgs = RTree.algs.copy()
-        RTree.algs['merge_nodes'] = alg.merge_nodes_ref
-        RTree.algs['split_node'] = alg.split_node_ref
 
-        entries = sorted(entries,key=lambda e:e.ref,reverse=True)
-        self.context.max_entries_num = 8
-        self.root = None
-        for entry in entries:
-            self.insert(entry)
-
-        RTree.algs = oldalgs
 
     def view(self,path,filename):
         g = Digraph('g', filename='rtree.gv', node_attr={'shape': 'record', 'height': '.1'})
